@@ -1,90 +1,107 @@
 use std::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
 #[derive(Debug, Eq, PartialEq, Copy, Clone, Hash)]
-pub struct Vector2D {
-    pub x: i32,
-    pub y: i32,
+pub struct Vector<const N: usize> {
+    pub coords: [i32; N],
 }
 
 #[allow(dead_code)]
-impl Vector2D {
-    pub fn new(x: i32, y: i32) -> Vector2D {
-        Vector2D { x, y }
+impl<const N: usize> Vector<N> {
+    #[inline]
+    pub fn zero() -> Self {
+        Self { coords: [0i32; N] }
     }
 
-    pub fn zero() -> Vector2D {
-        Vector2D::new(0, 0)
-    }
-
+    #[inline]
     pub fn manhattan_distance(&self) -> i32 {
-        self.x.abs() + self.y.abs()
+        self.coords.iter().map(|x| x.abs()).sum()
+    }
+
+    #[inline]
+    pub fn for_each(&mut self, f: impl FnMut(&mut i32)) {
+        self.coords.iter_mut().for_each(f);
+    }
+
+    #[inline]
+    pub fn map(&self, f: impl FnMut(&i32) -> i32) -> Self {
+        Self::from_iter(self.coords.iter().map(f))
+    }
+
+    #[inline]
+    pub fn zip_in_place(&mut self, other: &Vector<N>, mut f: impl FnMut(&mut i32, &i32)) {
+        self.coords.iter_mut().zip(other.coords.iter()).for_each(|(x, y)| f(x, y))
+    }
+
+    #[inline]
+    pub fn zip_with(&self, other: &Vector<N>, mut f: impl FnMut(&i32, &i32) -> i32) -> Self {
+        Self::from_iter(self.coords.iter().zip(other.coords.iter()).map(|(x, y)| f(x, y)))
+    }
+
+    fn from_iter(iter: impl Iterator<Item=i32>) -> Self {
+        let mut coords = [0i32; N];
+        coords.iter_mut().zip(iter).for_each(|(dest, src)| { *dest = src });
+        coords.into()
     }
 }
 
-impl Default for Vector2D {
+impl<const N: usize> Default for Vector<N> {
     fn default() -> Self {
-        Vector2D::zero()
+        Self::zero()
     }
 }
 
-impl Add for Vector2D {
+impl<const N: usize> From<[i32; N]> for Vector<N> {
+    fn from(coords: [i32; N]) -> Self {
+        Self { coords }
+    }
+}
+
+impl<const N: usize> Add for Vector<N> {
     type Output = Self;
 
-    fn add(self: Vector2D, other: Vector2D) -> Vector2D {
-        Vector2D {
-            x: self.x + other.x,
-            y: self.y + other.y,
-        }
+    fn add(self: Self, other: Vector<N>) -> Self {
+        self.zip_with(&other, |x, y| x + y)
     }
 }
 
-impl Sub for Vector2D {
+impl<const N: usize> Sub for Vector<N> {
     type Output = Self;
 
-    fn sub(self: Vector2D, other: Vector2D) -> Vector2D {
-        Vector2D {
-            x: self.x - other.x,
-            y: self.y - other.y,
-        }
+    fn sub(self: Vector<N>, other: Vector<N>) -> Self {
+        self.zip_with(&other, |x, y| x - y)
     }
 }
 
-impl Neg for Vector2D {
+impl<const N: usize> Neg for Vector<N> {
     type Output = Self;
 
-    fn neg(self) -> Vector2D {
-        Vector2D::new(-self.x, -self.y)
+    fn neg(self) -> Self {
+        self.map(|&x| -x)
     }
 }
 
-impl AddAssign for Vector2D {
+impl<const N: usize> AddAssign for Vector<N> {
     fn add_assign(&mut self, other: Self) {
-        self.x.add_assign(other.x);
-        self.y.add_assign(other.y);
+        self.zip_in_place(&other, |x, y| x.add_assign(y));
     }
 }
 
-impl SubAssign for Vector2D {
+impl<const N: usize> SubAssign for Vector<N> {
     fn sub_assign(&mut self, other: Self) {
-        self.x.sub_assign(other.x);
-        self.y.sub_assign(other.y);
+        self.zip_in_place(&other, |x, y| x.sub_assign(y));
     }
 }
 
-impl Mul<i32> for Vector2D {
-    type Output = Vector2D;
+impl<const N: usize> Mul<i32> for Vector<N> {
+    type Output = Self;
 
     fn mul(self, rhs: i32) -> Self::Output {
-        Vector2D {
-            x: self.x * rhs,
-            y: self.y * rhs,
-        }
+        self.map(|x| x * rhs)
     }
 }
 
-impl MulAssign<i32> for Vector2D {
+impl<const N: usize> MulAssign<i32> for Vector<N> {
     fn mul_assign(&mut self, rhs: i32) {
-        self.x.mul_assign(rhs);
-        self.y.mul_assign(rhs);
+        self.for_each(|x| x.mul_assign(rhs));
     }
 }
