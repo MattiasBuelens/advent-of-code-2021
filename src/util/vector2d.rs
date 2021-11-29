@@ -40,17 +40,28 @@ impl<const N: usize> Vector<N> {
 
     #[inline]
     pub fn zip_in_place(&mut self, other: &Vector<N>, mut f: impl FnMut(&mut i32, &i32)) {
-        self.coords.iter_mut().zip(other.coords.iter()).for_each(|(x, y)| f(x, y))
+        self.coords
+            .iter_mut()
+            .zip(other.coords.iter())
+            .for_each(|(x, y)| f(x, y))
     }
 
     #[inline]
     pub fn zip_with(&self, other: &Vector<N>, mut f: impl FnMut(&i32, &i32) -> i32) -> Self {
-        Self::from_iter(self.coords.iter().zip(other.coords.iter()).map(|(x, y)| f(x, y)))
+        Self::from_iter(
+            self.coords
+                .iter()
+                .zip(other.coords.iter())
+                .map(|(x, y)| f(x, y)),
+        )
     }
 
-    fn from_iter(iter: impl Iterator<Item=i32>) -> Self {
+    fn from_iter(iter: impl Iterator<Item = i32>) -> Self {
         let mut coords = [0i32; N];
-        coords.iter_mut().zip(iter).for_each(|(dest, src)| { *dest = src });
+        coords
+            .iter_mut()
+            .zip(iter)
+            .for_each(|(dest, src)| *dest = src);
         coords.into()
     }
 }
