@@ -1,5 +1,5 @@
 pub use math::*;
-pub use vector2d::*;
+pub use vector::*;
 
 mod math;
-mod vector2d;
+mod vector;
