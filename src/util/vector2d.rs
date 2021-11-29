@@ -13,6 +13,12 @@ impl<const N: usize> Vector<N> {
     }
 
     #[inline]
+    pub fn abs(mut self) -> Self {
+        self.map_in_place(|x| x.abs());
+        self
+    }
+
+    #[inline]
     pub fn manhattan_distance(&self) -> i32 {
         self.coords.iter().map(|x| x.abs()).sum()
     }
@@ -20,6 +26,11 @@ impl<const N: usize> Vector<N> {
     #[inline]
     pub fn for_each(&mut self, f: impl FnMut(&mut i32)) {
         self.coords.iter_mut().for_each(f);
+    }
+
+    #[inline]
+    pub fn map_in_place(&mut self, mut f: impl FnMut(&i32) -> i32) {
+        self.for_each(|x| *x = f(x))
     }
 
     #[inline]
@@ -53,6 +64,12 @@ impl<const N: usize> Default for Vector<N> {
 impl<const N: usize> From<[i32; N]> for Vector<N> {
     fn from(coords: [i32; N]) -> Self {
         Self { coords }
+    }
+}
+
+impl<const N: usize> From<Vector<N>> for [i32; N] {
+    fn from(vector: Vector<N>) -> Self {
+        vector.coords
     }
 }
 
@@ -103,5 +120,186 @@ impl<const N: usize> Mul<i32> for Vector<N> {
 impl<const N: usize> MulAssign<i32> for Vector<N> {
     fn mul_assign(&mut self, rhs: i32) {
         self.for_each(|x| x.mul_assign(rhs));
+    }
+}
+
+pub type Vector2D = Vector<2>;
+
+#[allow(dead_code)]
+impl Vector2D {
+    pub fn new(x: i32, y: i32) -> Self {
+        Self::from([x, y])
+    }
+
+    #[inline]
+    pub fn x(&self) -> i32 {
+        self.coords[0]
+    }
+
+    #[inline]
+    pub fn y(&self) -> i32 {
+        self.coords[1]
+    }
+}
+
+pub type Vector3D = Vector<3>;
+
+#[allow(dead_code)]
+impl Vector3D {
+    pub fn new(x: i32, y: i32, z: i32) -> Self {
+        Self::from([x, y, z])
+    }
+
+    #[inline]
+    pub fn x(&self) -> i32 {
+        self.coords[0]
+    }
+
+    #[inline]
+    pub fn y(&self) -> i32 {
+        self.coords[1]
+    }
+
+    #[inline]
+    pub fn z(&self) -> i32 {
+        self.coords[2]
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    mod vector2d {
+        use super::*;
+
+        #[test]
+        fn test_new() {
+            assert_eq!(Vector2D::new(3, 4), Vector2D::from([3, 4]));
+        }
+
+        #[test]
+        fn test_abs() {
+            assert_eq!(Vector2D::new(3, -4).abs(), Vector2D::from([3, 4]));
+        }
+
+        #[test]
+        fn test_add() {
+            assert_eq!(
+                Vector2D::new(3, 4) + Vector2D::new(5, 10),
+                Vector2D::from([8, 14])
+            );
+            assert_eq!(
+                Vector2D::new(3, 4) + Vector2D::zero(),
+                Vector2D::from([3, 4])
+            );
+        }
+
+        #[test]
+        fn test_sub() {
+            assert_eq!(
+                Vector2D::new(3, 4) - Vector2D::new(5, 10),
+                Vector2D::from([-2, -6])
+            );
+            assert_eq!(
+                Vector2D::new(3, 4) - Vector2D::zero(),
+                Vector2D::from([3, 4])
+            );
+        }
+
+        #[test]
+        fn test_neg() {
+            assert_eq!(-Vector2D::new(3, 4), Vector2D::from([-3, -4]));
+        }
+
+        #[test]
+        fn test_add_assign() {
+            let mut vector = Vector2D::new(3, 4);
+            vector += Vector2D::new(10, 20);
+            assert_eq!(vector, Vector2D::from([13, 24]));
+        }
+
+        #[test]
+        fn test_sub_assign() {
+            let mut vector = Vector2D::new(3, 4);
+            vector -= Vector2D::new(10, 20);
+            assert_eq!(vector, Vector2D::from([-7, -16]));
+        }
+
+        #[test]
+        fn test_mul() {
+            assert_eq!(Vector2D::new(3, 4) * 2, Vector2D::from([6, 8]));
+        }
+
+        #[test]
+        fn test_mul_assign() {
+            let mut vector = Vector2D::new(3, 4);
+            vector *= 3;
+            assert_eq!(vector, Vector2D::from([9, 12]));
+        }
+    }
+
+    mod vector3d {
+        use super::*;
+
+        #[test]
+        fn test_new() {
+            assert_eq!(Vector3D::new(3, 4, 5), Vector3D::from([3, 4, 5]));
+        }
+
+        #[test]
+        fn test_abs() {
+            assert_eq!(Vector3D::new(3, -4, -5).abs(), Vector3D::from([3, 4, 5]));
+        }
+
+        #[test]
+        fn test_add() {
+            assert_eq!(
+                Vector3D::new(3, 4, 5) + Vector3D::new(5, 10, 15),
+                Vector3D::from([8, 14, 20])
+            );
+            assert_eq!(
+                Vector3D::new(3, 4, 5) + Vector3D::zero(),
+                Vector3D::from([3, 4, 5])
+            );
+        }
+
+        #[test]
+        fn test_sub() {
+            assert_eq!(
+                Vector3D::new(3, 4, 5) - Vector3D::new(5, 10, 15),
+                Vector3D::from([-2, -6, -10])
+            );
+            assert_eq!(
+                Vector3D::new(3, 4, 5) - Vector3D::zero(),
+                Vector3D::from([3, 4, 5])
+            );
+        }
+
+        #[test]
+        fn test_add_assign() {
+            let mut vector = Vector3D::new(3, 4, 5);
+            vector += Vector3D::new(10, 20, 30);
+            assert_eq!(vector, Vector3D::from([13, 24, 35]));
+        }
+
+        #[test]
+        fn test_sub_assign() {
+            let mut vector = Vector3D::new(3, 4, 5);
+            vector -= Vector3D::new(10, 20, 30);
+            assert_eq!(vector, Vector3D::from([-7, -16, -25]));
+        }
+
+        #[test]
+        fn test_mul() {
+            assert_eq!(Vector3D::new(3, 4, 5) * 2, Vector3D::from([6, 8, 10]));
+        }
+
+        #[test]
+        fn test_mul_assign() {
+            let mut vector = Vector3D::new(3, 4, 5);
+            vector *= 3;
+            assert_eq!(vector, Vector3D::from([9, 12, 15]));
+        }
     }
 }
