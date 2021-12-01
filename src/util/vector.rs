@@ -1,3 +1,4 @@
+use std::fmt::{Display, Formatter};
 use std::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
 #[derive(Debug, Eq, PartialEq, Copy, Clone, Hash)]
@@ -69,6 +70,20 @@ impl<const N: usize> Vector<N> {
 impl<const N: usize> Default for Vector<N> {
     fn default() -> Self {
         Self::zero()
+    }
+}
+
+impl<const N: usize> Display for Vector<N> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "(")?;
+        for (i, coord) in self.coords.iter().enumerate() {
+            if i > 0 {
+                write!(f, ", ")?;
+            }
+            write!(f, "{}", coord)?;
+        }
+        write!(f, ")")?;
+        Ok(())
     }
 }
 
@@ -248,6 +263,11 @@ mod tests {
             vector *= 3;
             assert_eq!(vector, Vector2D::from([9, 12]));
         }
+
+        #[test]
+        fn test_display() {
+            assert_eq!(format!("{}", Vector2D::new(3, 4)), "(3, 4)");
+        }
     }
 
     mod vector3d {
@@ -311,6 +331,11 @@ mod tests {
             let mut vector = Vector3D::new(3, 4, 5);
             vector *= 3;
             assert_eq!(vector, Vector3D::from([9, 12, 15]));
+        }
+
+        #[test]
+        fn test_display() {
+            assert_eq!(format!("{}", Vector3D::new(3, 4, 5)), "(3, 4, 5)");
         }
     }
 }
