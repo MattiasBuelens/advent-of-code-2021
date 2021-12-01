@@ -1,3 +1,5 @@
+use super::util::array_windows;
+
 #[aoc_generator(day1)]
 pub fn input_generator(input: &str) -> Vec<i32> {
     input.lines().map(|line| line.parse().unwrap()).collect()
@@ -18,12 +20,8 @@ pub fn part2(input: &[i32]) -> usize {
 }
 
 fn count_increments(measurements: &[i32]) -> usize {
-    measurements
-        .windows(2)
-        .filter(|&window| {
-            let [prev, curr] = <&[i32; 2]>::try_from(window).unwrap();
-            curr > prev
-        })
+    array_windows::<_, 2>(measurements)
+        .filter(|[prev, curr]| curr > prev)
         .count()
 }
 
