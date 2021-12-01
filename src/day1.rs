@@ -26,3 +26,35 @@ fn count_increments(measurements: &[i32]) -> usize {
         })
         .count()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    lazy_static! {
+        static ref TEST_INPUT: &'static str = r"
+199
+200
+208
+210
+200
+207
+240
+269
+260
+263"
+        .trim();
+    }
+
+    #[test]
+    fn test_part1() {
+        let input = input_generator(&TEST_INPUT);
+        assert_eq!(part1(&input), 7);
+    }
+
+    #[test]
+    fn test_part2() {
+        let input = input_generator(&TEST_INPUT);
+        assert_eq!(part2(&input), 5);
+    }
+}
