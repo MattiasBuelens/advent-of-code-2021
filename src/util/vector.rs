@@ -102,7 +102,7 @@ impl<const N: usize> From<Vector<N>> for [i32; N] {
 impl<const N: usize> Add for Vector<N> {
     type Output = Self;
 
-    fn add(self: Self, other: Vector<N>) -> Self {
+    fn add(self, other: Vector<N>) -> Self {
         self.zip_with(&other, |x, y| x + y)
     }
 }
