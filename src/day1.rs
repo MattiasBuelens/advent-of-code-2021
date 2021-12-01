@@ -5,17 +5,26 @@ pub fn input_generator(input: &str) -> Vec<i32> {
 
 #[aoc(day1, part1)]
 pub fn part1(input: &[i32]) -> usize {
-    input.windows(2).filter(|&window| {
-        let [prev, curr] = <&[i32; 2]>::try_from(window).unwrap();
-        curr > prev
-    }).count()
+    input
+        .windows(2)
+        .filter(|&window| {
+            let [prev, curr] = <&[i32; 2]>::try_from(window).unwrap();
+            curr > prev
+        })
+        .count()
 }
 
 #[aoc(day1, part2)]
 pub fn part2(input: &[i32]) -> usize {
-    let windows = input.windows(3).map(|window| window.iter().sum::<i32>()).collect::<Vec<_>>();
-    windows.windows(2).filter(|&window| {
-        let [prev, curr] = <&[i32; 2]>::try_from(window).unwrap();
-        curr > prev
-    }).count()
+    let windows = input
+        .windows(3)
+        .map(|window| window.iter().sum::<i32>())
+        .collect::<Vec<_>>();
+    windows
+        .windows(2)
+        .filter(|&window| {
+            let [prev, curr] = <&[i32; 2]>::try_from(window).unwrap();
+            curr > prev
+        })
+        .count()
 }
