@@ -50,7 +50,23 @@ pub fn part1(input: &[Command]) -> i32 {
 
 #[aoc(day2, part2)]
 pub fn part2(input: &[Command]) -> i32 {
-    todo!()
+    let mut pos = Vector2D::zero();
+    let mut aim = 0;
+    for cmd in input {
+        match cmd {
+            Command::Forward(amount) => {
+                *pos.x_mut() += amount;
+                *pos.y_mut() += aim * amount;
+            }
+            Command::Down(amount) => {
+                aim += amount;
+            }
+            Command::Up(amount) => {
+                aim -= amount;
+            }
+        }
+    }
+    pos.x() * pos.y()
 }
 
 #[cfg(test)]
@@ -72,5 +88,11 @@ forward 2"
     fn test_part1() {
         let input = input_generator(&TEST_INPUT);
         assert_eq!(part1(&input), 150);
+    }
+
+    #[test]
+    fn test_part2() {
+        let input = input_generator(&TEST_INPUT);
+        assert_eq!(part2(&input), 900);
     }
 }
