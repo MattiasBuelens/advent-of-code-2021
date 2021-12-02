@@ -163,8 +163,18 @@ impl Vector2D {
     }
 
     #[inline]
+    pub fn x_mut(&mut self) -> &mut i32 {
+        &mut self.coords[0]
+    }
+
+    #[inline]
     pub fn y(&self) -> i32 {
         self.coords[1]
+    }
+
+    #[inline]
+    pub fn y_mut(&mut self) -> &mut i32 {
+        &mut self.coords[1]
     }
 }
 
