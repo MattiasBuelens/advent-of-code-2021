@@ -25,7 +25,28 @@ fn number_from_bits(bits: &[bool]) -> i32 {
 
 #[aoc(day3, part2)]
 pub fn part2(input: &[Vec<bool>]) -> i32 {
-    todo!()
+    let oxygen_generator_rating = number_from_bits(&find_rating(input, true));
+    let co2_scrubber_rating = number_from_bits(&find_rating(input, false));
+    oxygen_generator_rating * co2_scrubber_rating
+}
+
+fn find_rating(input: &[Vec<bool>], most_common: bool) -> Vec<bool> {
+    let nb_bits = input[0].len();
+    let mut candidates = input.to_vec();
+    for i in 0..nb_bits {
+        let nb_ones = candidates.iter().map(|number| number[i]).filter(|bit| *bit).count();
+        let nb_zeros = candidates.len() - nb_ones;
+        let target_bit = if most_common {
+            nb_ones >= nb_zeros
+        } else {
+            nb_ones < nb_zeros
+        };
+        candidates.retain(|candidate| candidate[i] == target_bit);
+        if candidates.len() == 1 {
+            return candidates.first().unwrap().clone();
+        }
+    }
+    panic!("no rating found");
 }
 
 #[cfg(test)]
@@ -53,5 +74,11 @@ mod tests {
     fn test_part1() {
         let input = input_generator(&TEST_INPUT);
         assert_eq!(part1(&input), 198);
+    }
+
+    #[test]
+    fn test_part2() {
+        let input = input_generator(&TEST_INPUT);
+        assert_eq!(part2(&input), 230);
     }
 }
