@@ -10,7 +10,7 @@ pub fn part1(input: &[Vec<bool>]) -> i32 {
     let nb_inputs = input.len();
     let nb_bits = input[0].len();
     let gamma_bits = (0..nb_bits).map(|i| {
-        let nb_ones = input.iter().map(|number| number[i]).filter(|bit| *bit).count();
+        let nb_ones = input.iter().filter(|number| number[i]).count();
         nb_ones >= (nb_inputs / 2)
     }).collect::<Vec<_>>();
     let gamma = number_from_bits(&gamma_bits);
@@ -34,7 +34,7 @@ fn find_rating(input: &[Vec<bool>], most_common: bool) -> Vec<bool> {
     let nb_bits = input[0].len();
     let mut candidates = input.to_vec();
     for i in 0..nb_bits {
-        let nb_ones = candidates.iter().map(|number| number[i]).filter(|bit| *bit).count();
+        let nb_ones = candidates.iter().filter(|number| number[i]).count();
         let nb_zeros = candidates.len() - nb_ones;
         let target_bit = if most_common {
             nb_ones >= nb_zeros
