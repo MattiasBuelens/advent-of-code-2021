@@ -9,15 +9,18 @@ pub fn input_generator(input: &str) -> Vec<Vec<bool>> {
 pub fn part1(input: &[Vec<bool>]) -> i32 {
     let nb_inputs = input.len();
     let nb_bits = input[0].len();
-    let gamma = (0..nb_bits).map(|i| {
+    let gamma_bits = (0..nb_bits).map(|i| {
         let nb_ones = input.iter().map(|number| number[i]).filter(|bit| *bit).count();
-        let most_common_bit = nb_ones >= (nb_inputs / 2);
-        let bit_pos = nb_bits - 1 - i;
-        (most_common_bit as i32) << bit_pos
-    }).sum::<i32>();
+        nb_ones >= (nb_inputs / 2)
+    }).collect::<Vec<_>>();
+    let gamma = number_from_bits(&gamma_bits);
     let all_ones = (1 << nb_bits) - 1;
     let epsilon = all_ones - gamma;
     gamma * epsilon
+}
+
+fn number_from_bits(bits: &[bool]) -> i32 {
+    bits.iter().rev().enumerate().map(|(pos, bit)| (*bit as i32) << pos).sum()
 }
 
 #[aoc(day3, part2)]
