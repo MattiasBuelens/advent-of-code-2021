@@ -1,18 +1,21 @@
 #[aoc_generator(day3)]
 pub fn input_generator(input: &str) -> Vec<Vec<bool>> {
-    input.lines().map(|line| {
-        line.chars().map(|c| c == '1').collect()
-    }).collect()
+    input
+        .lines()
+        .map(|line| line.chars().map(|c| c == '1').collect())
+        .collect()
 }
 
 #[aoc(day3, part1)]
 pub fn part1(input: &[Vec<bool>]) -> i32 {
     let nb_inputs = input.len();
     let nb_bits = input[0].len();
-    let gamma_bits = (0..nb_bits).map(|i| {
-        let nb_ones = input.iter().filter(|number| number[i]).count();
-        nb_ones >= (nb_inputs / 2)
-    }).collect::<Vec<_>>();
+    let gamma_bits = (0..nb_bits)
+        .map(|i| {
+            let nb_ones = input.iter().filter(|number| number[i]).count();
+            nb_ones >= (nb_inputs / 2)
+        })
+        .collect::<Vec<_>>();
     let gamma = number_from_bits(&gamma_bits);
     let all_ones = (1 << nb_bits) - 1;
     let epsilon = all_ones - gamma;
@@ -20,7 +23,11 @@ pub fn part1(input: &[Vec<bool>]) -> i32 {
 }
 
 fn number_from_bits(bits: &[bool]) -> i32 {
-    bits.iter().rev().enumerate().map(|(pos, bit)| (*bit as i32) << pos).sum()
+    bits.iter()
+        .rev()
+        .enumerate()
+        .map(|(pos, bit)| (*bit as i32) << pos)
+        .sum()
 }
 
 #[aoc(day3, part2)]

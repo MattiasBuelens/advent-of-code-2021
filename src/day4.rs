@@ -44,7 +44,7 @@ impl Board {
     fn is_winner(&self) -> bool {
         // Rows
         let mut rows = self.marked.iter();
-        if rows.find(|row| row.iter().all(|mark| *mark)).is_some() {
+        if rows.any(|row| row.iter().all(|mark| *mark)) {
             return true;
         }
         // Columns
@@ -91,7 +91,7 @@ pub fn input_generator(input: &str) -> Input {
 
 #[aoc(day4, part1)]
 pub fn part1(input: &Input) -> u32 {
-    let mut boards = input.boards.iter().cloned().collect::<Vec<_>>();
+    let mut boards = input.boards.to_vec();
     for &number in &input.draw {
         boards.iter_mut().for_each(|board| board.mark(number));
         if let Some(board) = boards.iter().find(|board| board.is_winner()) {
@@ -103,7 +103,7 @@ pub fn part1(input: &Input) -> u32 {
 
 #[aoc(day4, part2)]
 pub fn part2(input: &Input) -> u32 {
-    let mut boards = input.boards.iter().cloned().collect::<Vec<_>>();
+    let mut boards = input.boards.to_vec();
     for &number in &input.draw {
         boards.iter_mut().for_each(|board| board.mark(number));
         // Remove all boards that have won in this turn
