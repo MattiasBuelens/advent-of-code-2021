@@ -102,8 +102,20 @@ pub fn part1(input: &Input) -> u32 {
 }
 
 #[aoc(day4, part2)]
-pub fn part2(input: &Input) -> i32 {
-    todo!()
+pub fn part2(input: &Input) -> u32 {
+    let mut boards = input.boards.iter().cloned().collect::<Vec<_>>();
+    for &number in &input.draw {
+        boards.iter_mut().for_each(|board| board.mark(number));
+        // Remove all boards that have won in this turn
+        while let Some(pos) = boards.iter().position(|board| board.is_winner()) {
+            let board = boards.remove(pos);
+            // If this was the last board, return its score
+            if boards.is_empty() {
+                return (number as u32) * board.sum_unmarked();
+            }
+        }
+    }
+    panic!("no winner");
 }
 
 #[cfg(test)]
@@ -144,6 +156,6 @@ mod tests {
     #[test]
     fn test_part2() {
         let input = input_generator(&TEST_INPUT);
-        assert_eq!(part2(&input), 0);
+        assert_eq!(part2(&input), 1924);
     }
 }
