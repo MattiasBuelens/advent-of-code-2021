@@ -1,4 +1,4 @@
-use std::cmp::{max, min};
+use std::cmp::Ordering;
 use std::collections::HashMap;
 
 use crate::util::Vector2D;
@@ -30,34 +30,40 @@ pub fn input_generator(input: &str) -> Vec<Line> {
         .collect()
 }
 
-#[aoc(day5, part1)]
-pub fn part1(lines: &[Line]) -> usize {
+fn sign(x: i32) -> i32 {
+    match x.cmp(&0) {
+        Ordering::Equal => 0,
+        Ordering::Greater => 1,
+        Ordering::Less => -1,
+    }
+}
+
+fn count_overlaps(lines: &[Line], diagonals: bool) -> usize {
     let mut grid = HashMap::<Vector2D, usize>::new();
-    for Line(start, end) in lines {
-        if start.x() == end.x() {
-            let min_y = min(start.y(), end.y());
-            let max_y = max(start.y(), end.y());
-            for y in min_y..=max_y {
-                grid.entry(Vector2D::new(start.x(), y))
-                    .and_modify(|count| *count += 1)
-                    .or_insert(1);
-            }
-        } else if start.y() == end.y() {
-            let min_x = min(start.x(), end.x());
-            let max_x = max(start.x(), end.x());
-            for x in min_x..=max_x {
-                grid.entry(Vector2D::new(x, start.y()))
-                    .and_modify(|count| *count += 1)
-                    .or_insert(1);
-            }
+    for &Line(start, end) in lines {
+        let diff = end - start;
+        if !diagonals && diff.x() != 0 && diff.y() != 0 {
+            continue;
         }
+        let step = Vector2D::new(sign(diff.x()), sign(diff.y()));
+        let mut pos = start;
+        while pos != end {
+            grid.entry(pos).and_modify(|count| *count += 1).or_insert(1);
+            pos += step;
+        }
+        grid.entry(end).and_modify(|count| *count += 1).or_insert(1);
     }
     grid.values().filter(|&&count| count >= 2).count()
 }
 
+#[aoc(day5, part1)]
+pub fn part1(lines: &[Line]) -> usize {
+    count_overlaps(lines, false)
+}
+
 #[aoc(day5, part2)]
-pub fn part2(input: &[Line]) -> i32 {
-    todo!()
+pub fn part2(lines: &[Line]) -> usize {
+    count_overlaps(lines, true)
 }
 
 #[cfg(test)]
@@ -88,6 +94,6 @@ mod tests {
     #[test]
     fn test_part2() {
         let input = input_generator(&TEST_INPUT);
-        assert_eq!(part2(&input), 0);
+        assert_eq!(part2(&input), 12);
     }
 }
