@@ -29,8 +29,32 @@ fn step(fishes: &mut Vec<u8>) {
 }
 
 #[aoc(day6, part2)]
-pub fn part2(input: &[u8]) -> i32 {
-    todo!()
+pub fn part2(input: &[u8]) -> u64 {
+    let mut population = create_population(input);
+    simulate(&mut population, 256);
+    population.iter().sum()
+}
+
+// Amount of fishes with a given timer
+type Population = [u64; 9];
+
+fn create_population(fishes: &[u8]) -> Population {
+    let mut population: Population = Population::default();
+    for fish in fishes {
+        population[*fish as usize] += 1;
+    }
+    population
+}
+
+fn simulate(population: &mut Population, steps: usize) {
+    for _step in 0..steps {
+        // Fishes with timer > 0 decrease their timer
+        // Fishes with timer 0 spawn new fishes with timer 8
+        population.rotate_left(1);
+        // Fishes with timer 0 spawn reset their own timer to 6
+        // (After rotating, timer 0 ends up at timer 8)
+        population[6] += population[8];
+    }
 }
 
 #[cfg(test)]
@@ -55,8 +79,20 @@ mod tests {
     }
 
     #[test]
+    fn test_part1_optimized() {
+        let mut fishes = input_generator(&TEST_INPUT);
+        let mut population = create_population(&fishes);
+        simulate(&mut population, 18);
+        assert_eq!(population.iter().sum::<u64>(), 26);
+        simulate(&mut population, 80 - 18);
+        assert_eq!(population.iter().sum::<u64>(), 5934);
+    }
+
+    #[test]
     fn test_part2() {
-        let input = input_generator(&TEST_INPUT);
-        assert_eq!(part2(&input), 0);
+        let mut fishes = input_generator(&TEST_INPUT);
+        let mut population = create_population(&fishes);
+        simulate(&mut population, 256);
+        assert_eq!(population.iter().sum::<u64>(), 26984457539);
     }
 }
