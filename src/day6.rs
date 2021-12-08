@@ -80,7 +80,7 @@ mod tests {
 
     #[test]
     fn test_part1_optimized() {
-        let mut fishes = input_generator(&TEST_INPUT);
+        let fishes = input_generator(&TEST_INPUT);
         let mut population = create_population(&fishes);
         simulate(&mut population, 18);
         assert_eq!(population.iter().sum::<u64>(), 26);
@@ -90,7 +90,7 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        let mut fishes = input_generator(&TEST_INPUT);
+        let fishes = input_generator(&TEST_INPUT);
         let mut population = create_population(&fishes);
         simulate(&mut population, 256);
         assert_eq!(population.iter().sum::<u64>(), 26984457539);

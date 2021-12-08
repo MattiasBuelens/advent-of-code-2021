@@ -18,8 +18,8 @@ pub fn part2(input: &[i32]) -> i32 {
 }
 
 fn solve(crabs: &[i32], fuel_fn: fn(cur_pos: i32, target_pos: i32) -> i32) -> i32 {
-    let min_pos = crabs.iter().min().unwrap().clone();
-    let max_pos = crabs.iter().max().unwrap().clone();
+    let min_pos = *crabs.iter().min().unwrap();
+    let max_pos = *crabs.iter().max().unwrap();
     let mut best_pos = 0;
     let mut best_fuel = i32::MAX;
     'outer: for pos in min_pos..=max_pos {
@@ -42,17 +42,17 @@ fn solve(crabs: &[i32], fuel_fn: fn(cur_pos: i32, target_pos: i32) -> i32) -> i3
 mod tests {
     use super::*;
 
-    const TEST_INPUT: &'static str = "16,1,2,0,4,2,7,1,2,14";
+    const TEST_INPUT: &str = "16,1,2,0,4,2,7,1,2,14";
 
     #[test]
     fn test_part1() {
-        let input = input_generator(&TEST_INPUT);
+        let input = input_generator(TEST_INPUT);
         assert_eq!(part1(&input), 37);
     }
 
     #[test]
     fn test_part2() {
-        let input = input_generator(&TEST_INPUT);
+        let input = input_generator(TEST_INPUT);
         assert_eq!(part2(&input), 168);
     }
 }
