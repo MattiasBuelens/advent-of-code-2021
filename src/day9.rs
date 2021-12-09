@@ -2,10 +2,10 @@ use std::collections::{HashSet, VecDeque};
 
 use crate::util::Vector2D;
 
-type HeightMap = Vec<Vec<u8>>;
+type HeightMap = [Vec<u8>];
 
 #[aoc_generator(day9)]
-pub fn input_generator(input: &str) -> HeightMap {
+pub fn input_generator(input: &str) -> Vec<Vec<u8>> {
     input
         .lines()
         .map(|line| {

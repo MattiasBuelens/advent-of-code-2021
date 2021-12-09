@@ -20,7 +20,6 @@ pub fn part2(input: &[i32]) -> i32 {
 fn solve(crabs: &[i32], fuel_fn: fn(cur_pos: i32, target_pos: i32) -> i32) -> i32 {
     let min_pos = *crabs.iter().min().unwrap();
     let max_pos = *crabs.iter().max().unwrap();
-    let mut best_pos = 0;
     let mut best_fuel = i32::MAX;
     'outer: for pos in min_pos..=max_pos {
         let mut fuel = 0;
@@ -31,7 +30,6 @@ fn solve(crabs: &[i32], fuel_fn: fn(cur_pos: i32, target_pos: i32) -> i32) -> i3
             fuel += fuel_fn(crab, pos);
         }
         if fuel < best_fuel {
-            best_pos = pos;
             best_fuel = fuel;
         }
     }
