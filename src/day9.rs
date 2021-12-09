@@ -1,3 +1,5 @@
+use crate::util::Vector2D;
+
 type HeightMap = Vec<Vec<u8>>;
 
 #[aoc_generator(day9)]
@@ -14,31 +16,39 @@ pub fn input_generator(input: &str) -> HeightMap {
 
 #[aoc(day9, part1)]
 pub fn part1(map: &HeightMap) -> i32 {
-    let mut low_points: Vec<u8> = vec![];
+    let low_points = get_low_points(map);
+    low_points
+        .iter()
+        .map(|pos| map[pos.y() as usize][pos.x() as usize] as i32 + 1)
+        .sum()
+}
+
+fn get_low_points(map: &HeightMap) -> Vec<Vector2D> {
+    let mut low_points: Vec<Vector2D> = vec![];
     for (y, row) in map.iter().enumerate() {
         for (x, height) in row.iter().enumerate() {
-            let neighbours = get_neighbours(map, x, y);
+            let pos = Vector2D::new(x as i32, y as i32);
+            let neighbours = get_neighbours(map, pos);
             if neighbours
                 .iter()
                 .all(|neighbour_height| height < neighbour_height)
             {
-                low_points.push(*height);
+                low_points.push(pos);
             }
         }
     }
-    low_points.iter().map(|&x| (x as i32) + 1).sum()
+    low_points
 }
 
-fn get_neighbours(map: &HeightMap, x: usize, y: usize) -> Vec<u8> {
+fn get_neighbours(map: &HeightMap, pos: Vector2D) -> Vec<u8> {
     [
-        x.checked_sub(1).map(|x| (x, y)),
-        x.checked_add(1).map(|x| (x, y)),
-        y.checked_sub(1).map(|y| (x, y)),
-        y.checked_add(1).map(|y| (x, y)),
+        pos + Vector2D::new(-1, 0),
+        pos + Vector2D::new(1, 0),
+        pos + Vector2D::new(0, -1),
+        pos + Vector2D::new(0, 1),
     ]
     .into_iter()
-    .filter_map(|pos| pos)
-    .filter_map(|(x, y)| map.get(y)?.get(x))
+    .filter_map(|pos| map.get(pos.y() as usize)?.get(pos.x() as usize))
     .copied()
     .collect()
 }
