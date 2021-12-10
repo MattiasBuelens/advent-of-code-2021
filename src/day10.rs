@@ -9,7 +9,7 @@ pub fn part1(input: &[String]) -> i32 {
         .iter()
         .map(|s| parse(s))
         .map(|result| match result {
-            ParseResult::Incomplete => 0,
+            ParseResult::Incomplete(_) => 0,
             ParseResult::Error(c) => match c {
                 ')' => 3,
                 ']' => 57,
@@ -22,7 +22,7 @@ pub fn part1(input: &[String]) -> i32 {
 }
 
 enum ParseResult {
-    Incomplete,
+    Incomplete(Vec<char>),
     Error(char),
 }
 
@@ -30,19 +30,48 @@ fn parse(line: &str) -> ParseResult {
     let mut stack: Vec<char> = vec![];
     for c in line.chars() {
         match (stack.last(), c) {
-            (_, '(' | '[' | '{' | '<') => stack.push(c),
-            (Some('('), ')') | (Some('['), ']') | (Some('{'), '}') | (Some('<'), '>') => {
+            (_, '(') => stack.push(')'),
+            (_, '[') => stack.push(']'),
+            (_, '{') => stack.push('}'),
+            (_, '<') => stack.push('>'),
+            (Some(&last_close), close) if last_close == close => {
                 stack.pop().unwrap();
             }
             (_, c) => return ParseResult::Error(c),
         }
     }
-    ParseResult::Incomplete
+    stack.reverse();
+    ParseResult::Incomplete(stack)
 }
 
 #[aoc(day10, part2)]
-pub fn part2(input: &[String]) -> i32 {
-    todo!()
+pub fn part2(input: &[String]) -> i64 {
+    let mut scores = input
+        .iter()
+        .map(|s| parse(s))
+        .filter_map(|result| match result {
+            ParseResult::Incomplete(completion) => Some(autocomplete_score(&completion)),
+            ParseResult::Error(_) => None,
+        })
+        .collect::<Vec<_>>();
+    scores.sort_unstable();
+    assert_eq!(scores.len() % 2, 1, "must have odd number of scores");
+    scores[scores.len() / 2]
+}
+
+fn autocomplete_score(completion: &[char]) -> i64 {
+    let mut score = 0;
+    for &c in completion {
+        score *= 5;
+        score += match c {
+            ')' => 1,
+            ']' => 2,
+            '}' => 3,
+            '>' => 4,
+            c => panic!("unexpected char {}", c),
+        }
+    }
+    score
 }
 
 #[cfg(test)]
@@ -51,7 +80,7 @@ mod tests {
 
     lazy_static! {
         static ref TEST_INPUT: &'static str = r"
-        [({(<(())[]>[[{[]{<()<>>
+[({(<(())[]>[[{[]{<()<>>
 [(()[<>])]({[<{<<[]>>(
 {([(<{}[<>[]}>{[]{[(<()>
 (((({<>}<{<{<>}{[]{[]{}
@@ -74,6 +103,6 @@ mod tests {
     #[test]
     fn test_part2() {
         let input = input_generator(&TEST_INPUT);
-        assert_eq!(part2(&input), 0);
+        assert_eq!(part2(&input), 288957);
     }
 }
