@@ -93,7 +93,15 @@ fn print_grid(octopuses: &[Vec<u8>]) {
 
 #[aoc(day11, part2)]
 pub fn part2(octopuses: &[Vec<u8>]) -> i32 {
-    todo!()
+    let mut octopuses = octopuses.to_vec();
+    let mut i = 0;
+    loop {
+        i += 1;
+        let flashes = step(&mut octopuses);
+        if flashes == 10 * 10 {
+            return i;
+        }
+    }
 }
 
 #[cfg(test)]
@@ -125,6 +133,6 @@ mod tests {
     #[test]
     fn test_part2() {
         let input = input_generator(&TEST_INPUT);
-        assert_eq!(part2(&input), 0);
+        assert_eq!(part2(&input), 195);
     }
 }
