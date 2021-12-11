@@ -1,20 +1,26 @@
 use crate::util::Vector2D;
 
+type Octopuses = [[u8; 10]; 10];
+
 #[aoc_generator(day11)]
-pub fn input_generator(input: &str) -> Vec<Vec<u8>> {
+pub fn input_generator(input: &str) -> Octopuses {
     input
         .lines()
         .map(|line| {
             line.chars()
                 .map(|c| c.to_digit(10).unwrap() as u8)
                 .collect::<Vec<_>>()
+                .try_into()
+                .unwrap()
         })
-        .collect()
+        .collect::<Vec<_>>()
+        .try_into()
+        .unwrap()
 }
 
 #[aoc(day11, part1)]
-pub fn part1(octopuses: &[Vec<u8>]) -> i32 {
-    let mut octopuses = octopuses.to_vec();
+pub fn part1(octopuses: &Octopuses) -> i32 {
+    let mut octopuses = *octopuses;
     let mut flashes = 0;
     for _ in 1..=100 {
         flashes += step(&mut octopuses);
@@ -22,7 +28,7 @@ pub fn part1(octopuses: &[Vec<u8>]) -> i32 {
     flashes
 }
 
-fn step(octopuses: &mut [Vec<u8>]) -> i32 {
+fn step(octopuses: &mut Octopuses) -> i32 {
     let mut flashes = 0;
     // First, the energy level of each octopus increases by 1.
     for row in octopuses.iter_mut() {
@@ -65,7 +71,7 @@ fn step(octopuses: &mut [Vec<u8>]) -> i32 {
     flashes
 }
 
-fn get_neighbours(map: &[Vec<u8>], pos: Vector2D) -> Vec<Vector2D> {
+fn get_neighbours(octopuses: &Octopuses, pos: Vector2D) -> Vec<Vector2D> {
     [
         pos + Vector2D::new(-1, -1),
         pos + Vector2D::new(-1, 0),
@@ -78,13 +84,16 @@ fn get_neighbours(map: &[Vec<u8>], pos: Vector2D) -> Vec<Vector2D> {
     ]
     .into_iter()
     .filter(|pos| {
-        pos.y() >= 0 && pos.y() < map.len() as i32 && pos.x() >= 0 && pos.x() < map[0].len() as i32
+        pos.y() >= 0
+            && pos.y() < octopuses.len() as i32
+            && pos.x() >= 0
+            && pos.x() < octopuses[0].len() as i32
     })
     .collect()
 }
 
 #[allow(unused)]
-fn print_grid(octopuses: &[Vec<u8>]) {
+fn print_grid(octopuses: &Octopuses) {
     octopuses.iter().for_each(|row| {
         row.iter().for_each(|octopus| print!("{}", octopus));
         println!();
@@ -92,8 +101,8 @@ fn print_grid(octopuses: &[Vec<u8>]) {
 }
 
 #[aoc(day11, part2)]
-pub fn part2(octopuses: &[Vec<u8>]) -> i32 {
-    let mut octopuses = octopuses.to_vec();
+pub fn part2(octopuses: &Octopuses) -> i32 {
+    let mut octopuses = *octopuses;
     let mut i = 0;
     loop {
         i += 1;
