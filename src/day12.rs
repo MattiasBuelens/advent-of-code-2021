@@ -1,4 +1,4 @@
-use std::collections::{HashSet, VecDeque};
+use std::collections::VecDeque;
 
 use multimap::MultiMap;
 
@@ -15,28 +15,46 @@ pub fn input_generator(input: &str) -> Vec<(String, String)> {
 
 type Path = Vec<String>;
 
-pub fn solve(input: &[(String, String)], can_visit_small: fn(&String, &[String]) -> bool) -> usize {
+#[derive(Debug, Clone)]
+pub struct Node {
+    path: Path,
+    did_revisit_small_cave: bool,
+}
+
+pub fn solve(input: &[(String, String)], can_visit_small: fn(&String, &Node) -> bool) -> usize {
     let mut edges = MultiMap::<String, String>::new();
     for (left, right) in input.to_vec() {
         edges.insert(left.clone(), right.clone());
         edges.insert(right, left);
     }
     let mut finished_paths = Vec::<Path>::new();
-    let mut queue = VecDeque::<Path>::new();
-    queue.push_back(vec!["start".to_string()]);
-    while let Some(path) = queue.pop_front() {
-        let current_cave = path.last().unwrap();
+    let mut queue = VecDeque::<Node>::new();
+    queue.push_back(Node {
+        path: vec!["start".to_string()],
+        did_revisit_small_cave: false,
+    });
+    while let Some(node) = queue.pop_front() {
+        let current_cave = node.path.last().unwrap();
         if current_cave == "end" {
-            finished_paths.push(path.clone());
+            finished_paths.push(node.path.clone());
         }
         for next_cave in edges.get_vec(current_cave).unwrap() {
-            if is_small_cave(next_cave) && !can_visit_small(next_cave, &path) {
-                continue;
+            let mut did_revisit_small_cave = node.did_revisit_small_cave;
+            if is_small_cave(next_cave) {
+                if !can_visit_small(next_cave, &node) {
+                    continue;
+                }
+                if node.path.contains(next_cave) {
+                    did_revisit_small_cave = true;
+                }
             }
             // Extend current path with next cave
-            let mut new_path = path.clone();
+            let mut new_path = node.path.clone();
             new_path.push(next_cave.clone());
-            queue.push_back(new_path);
+            queue.push_back(Node {
+                path: new_path,
+                did_revisit_small_cave,
+            });
         }
     }
     finished_paths.len()
@@ -48,17 +66,17 @@ fn is_small_cave(cave: &str) -> bool {
 
 #[aoc(day12, part1)]
 pub fn part1(input: &[(String, String)]) -> usize {
-    solve(input, |next_cave, path| {
+    solve(input, |next_cave, node| {
         // Small caves can only be visited once
-        !path.contains(next_cave)
+        !node.path.contains(next_cave)
     })
 }
 
 #[aoc(day12, part2)]
 pub fn part2(input: &[(String, String)]) -> usize {
-    solve(input, |next_cave, path| {
+    solve(input, |next_cave, node| {
         // At most one small cave can be visited twice
-        if !path.contains(next_cave) {
+        if !node.path.contains(next_cave) {
             return true;
         }
         // start and end can only be visited once
@@ -66,13 +84,7 @@ pub fn part2(input: &[(String, String)]) -> usize {
             return false;
         }
         // Check if we have already visited any small cave more than once
-        let small_caves = path
-            .iter()
-            .filter(|cave| is_small_cave(cave))
-            .collect::<Vec<_>>();
-        let small_caves_len = small_caves.len();
-        let unique_small_caves = small_caves.into_iter().collect::<HashSet<_>>();
-        small_caves_len == unique_small_caves.len()
+        !node.did_revisit_small_cave
     })
 }
 
