@@ -75,8 +75,13 @@ pub fn part1((paper, folds): &Input) -> usize {
 }
 
 #[aoc(day13, part2)]
-pub fn part2(input: &Input) -> i32 {
-    todo!()
+pub fn part2((paper, folds): &Input) -> i32 {
+    let mut paper = paper.clone();
+    for fold in folds {
+        paper = fold_paper(&paper, *fold);
+    }
+    print_paper(&paper);
+    0
 }
 
 #[cfg(test)]
@@ -118,6 +123,6 @@ fold along x=5"
     #[test]
     fn test_part2() {
         let input = input_generator(&TEST_INPUT);
-        assert_eq!(part2(&input), 0);
+        part2(&input);
     }
 }
