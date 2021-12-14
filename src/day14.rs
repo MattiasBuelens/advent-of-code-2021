@@ -19,11 +19,9 @@ pub fn input_generator(input: &str) -> Input {
 fn step(polymer: &[char], rules: &RuleMap) -> Vec<char> {
     polymer.windows(2).flat_map(|pair| {
         let (left, right) = (pair[0], pair[1]);
-        if let Some(&result) = rules.get(&(left, right)) {
-            vec![left, result]
-        } else {
-            vec![left]
-        }
+        // Each possible pair MUST have a rule
+        let result = *rules.get(&(left, right)).unwrap();
+        [left, result]
     }).chain(polymer.last().cloned()).collect()
 }
 
