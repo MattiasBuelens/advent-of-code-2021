@@ -40,9 +40,51 @@ pub fn part1((template, rules): &Input) -> usize {
     max_count - min_count
 }
 
+type PairCounts = HashMap<(char, char), u64>;
+type ElementCounts = HashMap<char, u64>;
+
+fn make_pair_counts(polymer: &[char]) -> PairCounts {
+    let mut counts = PairCounts::new();
+    for pair in polymer.windows(2) {
+        let (left, right) = (pair[0], pair[1]);
+        *counts.entry((left, right)).or_default() += 1;
+    }
+    counts
+}
+
+fn step_part2(counts: &PairCounts, rules: &RuleMap) -> PairCounts {
+    let mut new_counts = PairCounts::new();
+    for (&(left, right), count) in counts {
+        // Each possible pair MUST have a rule
+        let result = *rules.get(&(left, right)).unwrap();
+        *new_counts.entry((left, result)).or_default() += count;
+        *new_counts.entry((result, right)).or_default() += count;
+    }
+    new_counts
+}
+
+fn count_elements(pair_counts: &PairCounts, last_element: char) -> ElementCounts {
+    let mut counts = ElementCounts::new();
+    for (&(left, _), count) in pair_counts {
+        // Each element appears in 2 pairs, except for the first and last pair of the polymer
+        // Count only the first element of the pair, and then compensate for the last one
+        *counts.entry(left).or_default() += count;
+    }
+    // The last element never changes, so we add it separately
+    *counts.entry(last_element).or_default() += 1;
+    counts
+}
+
 #[aoc(day14, part2)]
-pub fn part2(input: &Input) -> i32 {
-    todo!()
+pub fn part2((template, rules): &Input) -> u64 {
+    let mut pair_counts = make_pair_counts(template);
+    for _ in 1..=40 {
+        pair_counts = step_part2(&pair_counts, rules);
+    }
+    let counts = count_elements(&pair_counts, *template.last().unwrap());
+    let min_count = *counts.values().min().unwrap();
+    let max_count = *counts.values().max().unwrap();
+    max_count - min_count
 }
 
 #[cfg(test)]
@@ -80,6 +122,6 @@ CN -> C".trim();
     #[test]
     fn test_part2() {
         let input = input_generator(&TEST_INPUT);
-        assert_eq!(part2(&input), 0);
+        assert_eq!(part2(&input), 2188189693529);
     }
 }
