@@ -3,6 +3,7 @@ use pathfinding::directed::astar::*;
 use crate::util::Vector2D;
 
 type Cave = Vec<Vec<u32>>;
+type CaveRef<'a> = &'a [Vec<u32>];
 
 #[aoc_generator(day15)]
 pub fn input_generator(input: &str) -> Cave {
@@ -12,7 +13,7 @@ pub fn input_generator(input: &str) -> Cave {
         .collect()
 }
 
-fn find_lowest_risk(cave: &Cave) -> u32 {
+fn find_lowest_risk(cave: CaveRef) -> u32 {
     let start = Vector2D::new(0, 0);
     let goal = Vector2D::new(cave[0].len() as i32 - 1, cave.len() as i32 - 1);
 
@@ -36,11 +37,11 @@ fn find_lowest_risk(cave: &Cave) -> u32 {
 }
 
 #[aoc(day15, part1)]
-pub fn part1(cave: &Cave) -> u32 {
+pub fn part1(cave: CaveRef) -> u32 {
     find_lowest_risk(cave)
 }
 
-fn get_neighbours(cave: &Cave, pos: Vector2D) -> Vec<Vector2D> {
+fn get_neighbours(cave: CaveRef, pos: Vector2D) -> Vec<Vector2D> {
     pos.neighbours()
         .filter(|pos| {
             pos.y() >= 0
@@ -52,12 +53,12 @@ fn get_neighbours(cave: &Cave, pos: Vector2D) -> Vec<Vector2D> {
 }
 
 #[aoc(day15, part2)]
-pub fn part2(cave: &Cave) -> u32 {
+pub fn part2(cave: CaveRef) -> u32 {
     let cave = expand_cave(cave, 5);
     find_lowest_risk(&cave)
 }
 
-fn expand_cave(cave: &Cave, times: u32) -> Cave {
+fn expand_cave(cave: CaveRef, times: u32) -> Cave {
     (0..times)
         .flat_map(|tile_y| {
             cave.iter().map(move |row| {
@@ -73,7 +74,7 @@ fn expand_cave(cave: &Cave, times: u32) -> Cave {
 }
 
 #[allow(unused)]
-fn print_grid(cave: &Cave) {
+fn print_grid(cave: CaveRef) {
     cave.iter().for_each(|row| {
         row.iter().for_each(|risk| print!("{}", risk));
         println!();
