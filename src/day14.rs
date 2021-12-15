@@ -7,22 +7,29 @@ pub type Input = (Vec<char>, RuleMap);
 pub fn input_generator(input: &str) -> Input {
     let (template, rules) = input.split_once("\n\n").unwrap();
     let template = template.chars().collect();
-    let rules = rules.lines().map(|line| {
-        let (pair, result) = line.split_once(" -> ").unwrap();
-        let [left, right]: [char; 2] = pair.chars().collect::<Vec<_>>().try_into().unwrap();
-        let result = result.chars().next().unwrap();
-        ((left, right), result)
-    }).collect();
+    let rules = rules
+        .lines()
+        .map(|line| {
+            let (pair, result) = line.split_once(" -> ").unwrap();
+            let [left, right]: [char; 2] = pair.chars().collect::<Vec<_>>().try_into().unwrap();
+            let result = result.chars().next().unwrap();
+            ((left, right), result)
+        })
+        .collect();
     (template, rules)
 }
 
 fn step(polymer: &[char], rules: &RuleMap) -> Vec<char> {
-    polymer.windows(2).flat_map(|pair| {
-        let (left, right) = (pair[0], pair[1]);
-        // Each possible pair MUST have a rule
-        let result = *rules.get(&(left, right)).unwrap();
-        [left, result]
-    }).chain(polymer.last().cloned()).collect()
+    polymer
+        .windows(2)
+        .flat_map(|pair| {
+            let (left, right) = (pair[0], pair[1]);
+            // Each possible pair MUST have a rule
+            let result = *rules.get(&(left, right)).unwrap();
+            [left, result]
+        })
+        .chain(polymer.last().cloned())
+        .collect()
 }
 
 fn solve_part1((template, rules): &Input, steps: usize) -> u64 {
@@ -118,7 +125,8 @@ BN -> B
 BB -> N
 BC -> B
 CC -> N
-CN -> C".trim();
+CN -> C"
+            .trim();
     }
 
     #[test]
