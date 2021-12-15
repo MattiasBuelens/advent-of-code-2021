@@ -41,20 +41,14 @@ pub fn part1(cave: &Cave) -> u32 {
 }
 
 fn get_neighbours(cave: &Cave, pos: Vector2D) -> Vec<Vector2D> {
-    [
-        pos + Vector2D::new(-1, 0),
-        pos + Vector2D::new(0, -1),
-        pos + Vector2D::new(0, 1),
-        pos + Vector2D::new(1, 0),
-    ]
-    .into_iter()
-    .filter(|pos| {
-        pos.y() >= 0
-            && pos.y() < cave.len() as i32
-            && pos.x() >= 0
-            && pos.x() < cave[0].len() as i32
-    })
-    .collect()
+    pos.neighbours()
+        .filter(|pos| {
+            pos.y() >= 0
+                && pos.y() < cave.len() as i32
+                && pos.x() >= 0
+                && pos.x() < cave[0].len() as i32
+        })
+        .collect()
 }
 
 #[aoc(day15, part2)]

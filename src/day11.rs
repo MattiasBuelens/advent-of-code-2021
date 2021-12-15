@@ -72,24 +72,14 @@ fn step(octopuses: &mut Octopuses) -> i32 {
 }
 
 fn get_neighbours(octopuses: &Octopuses, pos: Vector2D) -> Vec<Vector2D> {
-    [
-        pos + Vector2D::new(-1, -1),
-        pos + Vector2D::new(-1, 0),
-        pos + Vector2D::new(-1, 1),
-        pos + Vector2D::new(0, -1),
-        pos + Vector2D::new(0, 1),
-        pos + Vector2D::new(1, -1),
-        pos + Vector2D::new(1, 0),
-        pos + Vector2D::new(1, 1),
-    ]
-    .into_iter()
-    .filter(|pos| {
-        pos.y() >= 0
-            && pos.y() < octopuses.len() as i32
-            && pos.x() >= 0
-            && pos.x() < octopuses[0].len() as i32
-    })
-    .collect()
+    pos.neighbours_diagonal()
+        .filter(|pos| {
+            pos.y() >= 0
+                && pos.y() < octopuses.len() as i32
+                && pos.x() >= 0
+                && pos.x() < octopuses[0].len() as i32
+        })
+        .collect()
 }
 
 #[allow(unused)]

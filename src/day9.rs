@@ -43,17 +43,14 @@ fn get_low_points(map: &HeightMap) -> Vec<Vector2D> {
 }
 
 fn get_neighbours(map: &HeightMap, pos: Vector2D) -> Vec<Vector2D> {
-    [
-        pos + Vector2D::new(-1, 0),
-        pos + Vector2D::new(1, 0),
-        pos + Vector2D::new(0, -1),
-        pos + Vector2D::new(0, 1),
-    ]
-    .into_iter()
-    .filter(|pos| {
-        pos.y() >= 0 && pos.y() < map.len() as i32 && pos.x() >= 0 && pos.x() < map[0].len() as i32
-    })
-    .collect()
+    pos.neighbours()
+        .filter(|pos| {
+            pos.y() >= 0
+                && pos.y() < map.len() as i32
+                && pos.x() >= 0
+                && pos.x() < map[0].len() as i32
+        })
+        .collect()
 }
 
 fn get_neighbour_heights(map: &HeightMap, pos: Vector2D) -> Vec<u8> {

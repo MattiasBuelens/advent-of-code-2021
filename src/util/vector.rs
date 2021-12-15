@@ -176,6 +176,30 @@ impl Vector2D {
     pub fn y_mut(&mut self) -> &mut i32 {
         &mut self.coords[1]
     }
+
+    pub fn neighbours(self) -> impl Iterator<Item = Self> {
+        [
+            self + Vector2D::new(0, -1),
+            self + Vector2D::new(-1, 0),
+            self + Vector2D::new(1, 0),
+            self + Vector2D::new(0, 1),
+        ]
+        .into_iter()
+    }
+
+    pub fn neighbours_diagonal(self) -> impl Iterator<Item = Self> {
+        [
+            self + Vector2D::new(-1, -1),
+            self + Vector2D::new(0, -1),
+            self + Vector2D::new(1, -1),
+            self + Vector2D::new(-1, 0),
+            self + Vector2D::new(1, 0),
+            self + Vector2D::new(-1, 1),
+            self + Vector2D::new(0, 1),
+            self + Vector2D::new(1, 1),
+        ]
+            .into_iter()
+    }
 }
 
 pub type Vector3D = Vector<3>;
