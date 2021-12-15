@@ -1,4 +1,4 @@
-use pathfinding::directed::dijkstra::*;
+use pathfinding::directed::astar::*;
 
 use crate::util::Vector2D;
 
@@ -16,7 +16,7 @@ fn find_lowest_risk(cave: &Cave) -> u32 {
     let start = Vector2D::new(0, 0);
     let goal = Vector2D::new(cave[0].len() as i32 - 1, cave.len() as i32 - 1);
 
-    let (_path, cost) = dijkstra(
+    let (_path, cost) = astar(
         &start,
         |pos| -> Vec<(Vector2D, u32)> {
             get_neighbours(cave, *pos)
@@ -27,7 +27,8 @@ fn find_lowest_risk(cave: &Cave) -> u32 {
                 })
                 .collect()
         },
-        |pos| pos == &goal,
+        |&pos| (pos - goal).manhattan_distance() as u32,
+        |&pos| pos == goal,
     )
     .unwrap();
 
