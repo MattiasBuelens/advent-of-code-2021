@@ -12,8 +12,7 @@ pub fn input_generator(input: &str) -> Cave {
         .collect()
 }
 
-#[aoc(day15, part1)]
-pub fn part1(cave: &Cave) -> u32 {
+fn find_lowest_risk(cave: &Cave) -> u32 {
     let start = Vector2D::new(0, 0);
     let goal = Vector2D::new(cave[0].len() as i32 - 1, cave.len() as i32 - 1);
 
@@ -35,6 +34,11 @@ pub fn part1(cave: &Cave) -> u32 {
     cost
 }
 
+#[aoc(day15, part1)]
+pub fn part1(cave: &Cave) -> u32 {
+    find_lowest_risk(cave)
+}
+
 fn get_neighbours(cave: &Cave, pos: Vector2D) -> Vec<Vector2D> {
     [
         pos + Vector2D::new(-1, 0),
@@ -53,8 +57,32 @@ fn get_neighbours(cave: &Cave, pos: Vector2D) -> Vec<Vector2D> {
 }
 
 #[aoc(day15, part2)]
-pub fn part2(cave: &Cave) -> i32 {
-    todo!()
+pub fn part2(cave: &Cave) -> u32 {
+    let cave = expand_cave(cave, 5);
+    find_lowest_risk(&cave)
+}
+
+fn expand_cave(cave: &Cave, times: u32) -> Cave {
+    (0..times)
+        .flat_map(|tile_y| {
+            cave.iter().map(move |row| {
+                (0..times)
+                    .flat_map(|tile_x| {
+                        row.iter()
+                            .map(move |&risk| (risk - 1 + tile_y + tile_x) % 9 + 1)
+                    })
+                    .collect()
+            })
+        })
+        .collect()
+}
+
+#[allow(unused)]
+fn print_grid(cave: &Cave) {
+    cave.iter().for_each(|row| {
+        row.iter().for_each(|risk| print!("{}", risk));
+        println!();
+    });
 }
 
 #[cfg(test)]
@@ -85,6 +113,6 @@ mod tests {
     #[test]
     fn test_part2() {
         let input = input_generator(&TEST_INPUT);
-        assert_eq!(part2(&input), 0);
+        assert_eq!(part2(&input), 315);
     }
 }
