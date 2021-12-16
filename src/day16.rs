@@ -32,6 +32,22 @@ pub enum OperatorType {
     EqualTo,
 }
 
+impl OperatorType {
+    pub fn parse(type_id: u8) -> OperatorType {
+        match type_id {
+            0 => OperatorType::Sum,
+            1 => OperatorType::Product,
+            2 => OperatorType::Minimum,
+            3 => OperatorType::Maximum,
+            // 4 => literal
+            5 => OperatorType::GreaterThan,
+            6 => OperatorType::LessThan,
+            7 => OperatorType::EqualTo,
+            _ => panic!("unknown operator type: {}", type_id)
+        }
+    }
+}
+
 #[derive(Debug)]
 pub enum OperatorLength {
     Bits(u16),
@@ -66,7 +82,7 @@ impl Packet {
     }
 
     fn parse_operator(reader: &mut BitReader, type_id: u8) -> bitreader::Result<PacketData> {
-        let type_id = Self::parse_operator_type(type_id);
+        let type_id = OperatorType::parse(type_id);
         let length_type_id = reader.read_bool()?;
         let length = match length_type_id {
             false => OperatorLength::Bits(reader.read_u16(15)?),
@@ -77,20 +93,6 @@ impl Packet {
             OperatorLength::PacketCount(count) => Self::parse_sub_packets_by_count(reader, count)?,
         };
         Ok(PacketData::Operator { type_id, length, packets })
-    }
-
-    fn parse_operator_type(type_id: u8) -> OperatorType {
-        match type_id {
-            0 => OperatorType::Sum,
-            1 => OperatorType::Product,
-            2 => OperatorType::Minimum,
-            3 => OperatorType::Maximum,
-            // 4 => literal
-            5 => OperatorType::GreaterThan,
-            6 => OperatorType::LessThan,
-            7 => OperatorType::EqualTo,
-            _ => panic!("unknown operator type: {}", type_id)
-        }
     }
 
     fn parse_sub_packets_by_bits(reader: &mut BitReader, bits: u16) -> bitreader::Result<Vec<Packet>> {
