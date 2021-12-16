@@ -27,7 +27,7 @@ pub enum PacketData {
     },
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum OperatorType {
     Sum,
     Product,
@@ -145,37 +145,39 @@ impl Packet {
 
     pub fn evaluate(&self) -> u64 {
         match &self.data {
-            PacketData::Literal { value } => *value as u64,
+            PacketData::Literal { value } => *value,
             PacketData::Operator {
                 type_id, packets, ..
-            } => {
-                let mut values = packets.iter().map(|sub_packet| sub_packet.evaluate());
-                match type_id {
-                    OperatorType::Sum => values.sum(),
-                    OperatorType::Product => values.product(),
-                    OperatorType::Minimum => values.min().unwrap(),
-                    OperatorType::Maximum => values.max().unwrap(),
-                    OperatorType::GreaterThan => {
-                        if values.next().unwrap() > values.next().unwrap() {
-                            1
-                        } else {
-                            0
-                        }
-                    }
-                    OperatorType::LessThan => {
-                        if values.next().unwrap() < values.next().unwrap() {
-                            1
-                        } else {
-                            0
-                        }
-                    }
-                    OperatorType::EqualTo => {
-                        if values.next().unwrap() == values.next().unwrap() {
-                            1
-                        } else {
-                            0
-                        }
-                    }
+            } => Self::evaluate_operator(*type_id, packets),
+        }
+    }
+
+    fn evaluate_operator(type_id: OperatorType, packets: &[Packet]) -> u64 {
+        let mut values = packets.iter().map(|sub_packet| sub_packet.evaluate());
+        match type_id {
+            OperatorType::Sum => values.sum(),
+            OperatorType::Product => values.product(),
+            OperatorType::Minimum => values.min().unwrap(),
+            OperatorType::Maximum => values.max().unwrap(),
+            OperatorType::GreaterThan => {
+                if values.next().unwrap() > values.next().unwrap() {
+                    1
+                } else {
+                    0
+                }
+            }
+            OperatorType::LessThan => {
+                if values.next().unwrap() < values.next().unwrap() {
+                    1
+                } else {
+                    0
+                }
+            }
+            OperatorType::EqualTo => {
+                if values.next().unwrap() == values.next().unwrap() {
+                    1
+                } else {
+                    0
                 }
             }
         }
