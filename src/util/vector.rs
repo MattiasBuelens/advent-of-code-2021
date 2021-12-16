@@ -198,7 +198,7 @@ impl Vector2D {
             self + Vector2D::new(0, 1),
             self + Vector2D::new(1, 1),
         ]
-            .into_iter()
+        .into_iter()
     }
 }
 
