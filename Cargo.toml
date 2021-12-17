@@ -16,3 +16,4 @@ lazy_static = "1.4.0"
 multimap = { version = "0.8.3", default-features = false }
 pathfinding = "0.8.2"
 bitreader = "0.3.4"
+regex = "1.5.4"
