@@ -41,7 +41,7 @@ pub fn part1(target: &TargetArea) -> i32 {
     // X velocity must not be beyond target area, otherwise we miss it in the first step
     for vel_x in (0..=target.max_x).chain(target.min_y..=0) {
         // TODO Max bound for Y velocity?
-        for vel_y in 0..1000 {
+        for vel_y in target.min_y..1000 {
             if let Some(y) = launch(Vector2D::new(vel_x, vel_y), target) {
                 max_y = max_y.map(|old_y| max(old_y, y)).or(Some(y))
             }
@@ -73,7 +73,15 @@ fn launch(mut velocity: Vector2D, target: &TargetArea) -> Option<i32> {
 
 #[aoc(day17, part2)]
 pub fn part2(target: &TargetArea) -> i32 {
-    todo!()
+    let mut count = 0;
+    for vel_x in (0..=target.max_x).chain(target.min_y..=0) {
+        for vel_y in target.min_y..1000 {
+            if launch(Vector2D::new(vel_x, vel_y), target).is_some() {
+                count += 1
+            }
+        }
+    }
+    count
 }
 
 #[cfg(test)]
@@ -100,6 +108,6 @@ mod tests {
     #[test]
     fn test_part2() {
         let input = input_generator(&TEST_INPUT);
-        assert_eq!(part2(&input), 0);
+        assert_eq!(part2(&input), 112);
     }
 }
