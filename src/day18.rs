@@ -143,13 +143,18 @@ impl Snailfish {
     }
 }
 
-#[aoc(day18, part1)]
-pub fn part1(input: &[Snailfish]) -> i32 {
-    let mut result = input[0].clone();
-    for number in input.iter().skip(1) {
+fn add_all(numbers: &[Snailfish]) -> Snailfish {
+    let (first, rest) = numbers.split_first().unwrap();
+    let mut result = first.clone();
+    for number in rest {
         result = result.add(number.clone());
     }
-    result.magnitude()
+    result
+}
+
+#[aoc(day18, part1)]
+pub fn part1(input: &[Snailfish]) -> i32 {
+    add_all(input).magnitude()
 }
 
 #[aoc(day18, part2)]
@@ -206,6 +211,14 @@ mod tests {
         let mut number: Snailfish = "[[6,[5,[4,[3,2]]]],1]".parse().unwrap();
         assert!(number.try_explode());
         assert_eq!(&number.to_string(), "[[6,[5,[7,0]]],3]");
+
+        let mut number: Snailfish = "[[3,[2,[1,[7,3]]]],[6,[5,[4,[3,2]]]]]".parse().unwrap();
+        assert!(number.try_explode());
+        assert_eq!(&number.to_string(), "[[3,[2,[8,0]]],[9,[5,[4,[3,2]]]]]");
+
+        let mut number: Snailfish = "[[3,[2,[8,0]]],[9,[5,[4,[3,2]]]]]".parse().unwrap();
+        assert!(number.try_explode());
+        assert_eq!(&number.to_string(), "[[3,[2,[8,0]]],[9,[5,[7,0]]]]");
     }
 
     #[test]
@@ -225,6 +238,65 @@ mod tests {
         let right: Snailfish = "[1,1]".parse().unwrap();
         let number = left.add(right);
         assert_eq!(&number.to_string(), "[[[[0,7],4],[[7,8],[6,0]]],[8,1]]");
+    }
+
+    #[test]
+    fn test_add_all() {
+        let numbers = input_generator(
+            r"
+[1,1]
+[2,2]
+[3,3]
+[4,4]"
+                .trim(),
+        );
+        let result = add_all(&numbers);
+        assert_eq!(&result.to_string(), "[[[[1,1],[2,2]],[3,3]],[4,4]]");
+
+        let numbers = input_generator(
+            r"
+[1,1]
+[2,2]
+[3,3]
+[4,4]
+[5,5]"
+                .trim(),
+        );
+        let result = add_all(&numbers);
+        assert_eq!(&result.to_string(), "[[[[3,0],[5,3]],[4,4]],[5,5]]");
+
+        let numbers = input_generator(
+            r"
+[1,1]
+[2,2]
+[3,3]
+[4,4]
+[5,5]
+[6,6]"
+                .trim(),
+        );
+        let result = add_all(&numbers);
+        assert_eq!(&result.to_string(), "[[[[5,0],[7,4]],[5,5]],[6,6]]");
+
+        let numbers = input_generator(
+            r"
+[[[0,[4,5]],[0,0]],[[[4,5],[2,6]],[9,5]]]
+[7,[[[3,7],[4,3]],[[6,3],[8,8]]]]
+[[2,[[0,8],[3,4]]],[[[6,7],1],[7,[1,6]]]]
+[[[[2,4],7],[6,[0,5]]],[[[6,8],[2,8]],[[2,1],[4,5]]]]
+[7,[5,[[3,8],[1,4]]]]
+[[2,[2,2]],[8,[8,1]]]
+[2,9]
+[1,[[[9,3],9],[[9,0],[0,7]]]]
+[[[5,[7,4]],7],1]
+[[[[4,2],2],6],[8,7]]"
+                .trim(),
+        );
+        let result = add_all(&numbers);
+        assert_eq!(
+            &result.to_string(),
+            "[[[[8,7],[7,7]],[[8,6],[7,7]]],[[[0,7],[6,6]],[8,7]]]"
+        );
     }
 
     #[test]
