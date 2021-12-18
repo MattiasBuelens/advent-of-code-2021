@@ -14,7 +14,8 @@ pub struct TargetArea {
 }
 
 lazy_static! {
-    static ref INPUT_RE: Regex = Regex::new(r"^target area: x=(-?\d+)\.\.(-?\d+), y=(-?\d+)\.\.(-?\d+)$").unwrap();
+    static ref INPUT_RE: Regex =
+        Regex::new(r"^target area: x=(-?\d+)\.\.(-?\d+), y=(-?\d+)\.\.(-?\d+)$").unwrap();
 }
 
 #[aoc_generator(day17)]
@@ -30,8 +31,7 @@ pub fn input_generator(input: &str) -> TargetArea {
 
 impl TargetArea {
     pub fn contains(&self, pos: &Vector2D) -> bool {
-        (self.min_x..=self.max_x).contains(&pos.x())
-            && (self.min_y..=self.max_y).contains(&pos.y())
+        (self.min_x..=self.max_x).contains(&pos.x()) && (self.min_y..=self.max_y).contains(&pos.y())
     }
 }
 
@@ -63,7 +63,7 @@ fn launch(mut velocity: Vector2D, target: &TargetArea) -> Option<i32> {
         *velocity.x_mut() += match velocity.x().cmp(&0) {
             Ordering::Greater => -1,
             Ordering::Less => 1,
-            Ordering::Equal => 0
+            Ordering::Equal => 0,
         };
         *velocity.y_mut() -= 1;
     }
