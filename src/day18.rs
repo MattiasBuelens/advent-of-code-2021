@@ -78,13 +78,12 @@ impl Snailfish {
     fn explode_inner(&mut self, depth: usize) -> ExplodeResult {
         if let Snailfish::Pair(left, right) = self {
             if depth >= 4 {
-                match (left.as_ref(), right.as_ref()) {
-                    (&Snailfish::Number(left), &Snailfish::Number(right)) => {
-                        // Explode this pair!
-                        *self = Snailfish::Number(0);
-                        return ExplodeResult::Success(Some(left), Some(right));
-                    }
-                    _ => {}
+                if let (&Snailfish::Number(left), &Snailfish::Number(right)) =
+                    (left.as_ref(), right.as_ref())
+                {
+                    // Explode this pair!
+                    *self = Snailfish::Number(0);
+                    return ExplodeResult::Success(Some(left), Some(right));
                 }
             }
             // Carry numbers from exploded pair to adjacent pairs

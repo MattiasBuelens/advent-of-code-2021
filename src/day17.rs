@@ -92,7 +92,7 @@ mod tests {
 
     #[test]
     fn test_launch() {
-        let target = input_generator(&TEST_INPUT);
+        let target = input_generator(TEST_INPUT);
         assert_eq!(launch(Vector2D::new(7, 2), &target), Some(3));
         assert_eq!(launch(Vector2D::new(6, 3), &target), Some(6));
         assert_eq!(launch(Vector2D::new(9, 0), &target), Some(0));
@@ -101,13 +101,13 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        let input = input_generator(&TEST_INPUT);
+        let input = input_generator(TEST_INPUT);
         assert_eq!(part1(&input), 45);
     }
 
     #[test]
     fn test_part2() {
-        let input = input_generator(&TEST_INPUT);
+        let input = input_generator(TEST_INPUT);
         assert_eq!(part2(&input), 112);
     }
 }
