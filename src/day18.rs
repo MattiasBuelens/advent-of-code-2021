@@ -1,3 +1,4 @@
+use std::cmp::max;
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 
@@ -146,7 +147,7 @@ impl Snailfish {
 #[aoc(day18, part1)]
 pub fn part1(input: &[Snailfish]) -> i32 {
     let mut result = input[0].clone();
-    for number in input.into_iter().skip(1) {
+    for number in input.iter().skip(1) {
         result = result.add(number.clone());
     }
     result.magnitude()
@@ -154,7 +155,17 @@ pub fn part1(input: &[Snailfish]) -> i32 {
 
 #[aoc(day18, part2)]
 pub fn part2(input: &[Snailfish]) -> i32 {
-    todo!()
+    let mut max_magnitude = 0;
+    for (i, left) in input.iter().enumerate() {
+        for (j, right) in input.iter().enumerate() {
+            if i == j {
+                continue;
+            }
+            let result = left.clone().add(right.clone());
+            max_magnitude = max(max_magnitude, result.magnitude());
+        }
+    }
+    max_magnitude
 }
 
 #[cfg(test)]
