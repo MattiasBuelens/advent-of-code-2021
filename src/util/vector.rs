@@ -1,7 +1,7 @@
-use std::fmt::{Display, Formatter};
+use std::fmt::{Debug, Display, Formatter};
 use std::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
-#[derive(Debug, Eq, PartialEq, Copy, Clone, Hash)]
+#[derive(Eq, PartialEq, Copy, Clone, Hash)]
 pub struct Vector<const N: usize> {
     pub coords: [i32; N],
 }
@@ -84,6 +84,16 @@ impl<const N: usize> Display for Vector<N> {
         }
         write!(f, ")")?;
         Ok(())
+    }
+}
+
+impl<const N: usize> Debug for Vector<N> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let mut f = f.debug_tuple(&format!("Vector<{}>", N));
+        for coord in self.coords.iter() {
+            f.field(coord);
+        }
+        f.finish()
     }
 }
 
@@ -379,6 +389,14 @@ mod tests {
         #[test]
         fn test_display() {
             assert_eq!(format!("{}", Vector3D::new(3, 4, 5)), "(3, 4, 5)");
+        }
+
+        #[test]
+        fn test_debug() {
+            assert_eq!(
+                format!("{:?}", Vector3D::new(3, 4, 5)),
+                "Vector<3>(3, 4, 5)"
+            );
         }
     }
 }
