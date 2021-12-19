@@ -111,14 +111,44 @@ impl ScannerState {
     }
 }
 
-fn step(
+#[derive(Debug, Clone)]
+struct Solver<'a> {
     beacons: HashSet<Vector3D>,
     scanners: Vec<ScannerState>,
-    reports: Vec<&Report>,
-) -> Option<(HashSet<Vector3D>, Vec<ScannerState>, Vec<&Report>)> {
+    reports: Vec<&'a Report>,
+}
+
+impl<'a> Solver<'a> {
+    pub fn new(mut reports: Vec<&'a Report>) -> Self {
+        // Set scanner 0 at (0,0,0) with default orientation
+        let first_report = reports.remove(0);
+        let first_scanner = ScannerState {
+            scanner_id: first_report.scanner_id,
+            position: Vector3D::zero(),
+            rotation: ROTATIONS[0],
+        };
+        let beacons = first_report
+            .beacons
+            .iter()
+            .map(|pos| first_scanner.transform(*pos))
+            .collect();
+        let scanners = vec![first_scanner];
+        Self {
+            beacons,
+            scanners,
+            reports,
+        }
+    }
+
+    pub fn step(mut self) -> Option<Self> {
+    let Self {
+        beacons,
+        scanners,
+        reports,
+    } = &mut self;
     if reports.is_empty() {
         // All done!
-        return Some((beacons, scanners, reports));
+        return Some(self);
     }
     for report in reports.iter() {
         let scanner_id = report.scanner_id;
@@ -145,7 +175,8 @@ fn step(
                         // Found a match!
                         // Add new beacons, and recurse with remaining reports
                         let mut new_beacons = beacons.clone();
-                        new_beacons.extend(report.beacons.iter().map(|pos| state.transform(*pos)));
+                        new_beacons
+                            .extend(report.beacons.iter().map(|pos| state.transform(*pos)));
                         let mut new_scanners = scanners.clone();
                         new_scanners.push(state);
                         let remaining_reports = reports
@@ -153,8 +184,12 @@ fn step(
                             .filter(|x| x.scanner_id != scanner_id)
                             .cloned()
                             .collect();
-                        if let result @ Some(_) = step(new_beacons, new_scanners, remaining_reports)
-                        {
+                        let new_solver = Self {
+                            beacons: new_beacons,
+                            scanners: new_scanners,
+                            reports: remaining_reports,
+                        };
+                        if let result @ Some(_) = new_solver.step() {
                             return result;
                         }
                     }
@@ -164,45 +199,29 @@ fn step(
     }
     // No matching report found, discard this
     None
-}
-
-fn solve(reports: &[Report]) -> (HashSet<Vector3D>, Vec<ScannerState>) {
-    let mut reports = reports.to_vec();
-
-    // Set scanner 0 at (0,0,0) with default orientation
-    let first_report = reports.remove(0);
-    let first_scanner = ScannerState {
-        scanner_id: first_report.scanner_id,
-        position: Vector3D::zero(),
-        rotation: ROTATIONS[0],
-    };
-    let first_beacons = first_report
-        .beacons
-        .into_iter()
-        .map(|pos| first_scanner.transform(pos))
-        .collect();
-
-    // Solve
-    let (beacons, scanners, _) =
-        step(first_beacons, vec![first_scanner], reports.iter().collect()).expect("no solution");
-
-    (beacons, scanners)
+    }
 }
 
 #[aoc(day19, part1)]
 pub fn part1(reports: &[Report]) -> usize {
-    let (beacons, _) = solve(reports);
-    beacons.len()
+    let solver = Solver::new(reports.iter().collect())
+        .step()
+        .expect("no solution");
+    solver.beacons.len()
 }
 
 #[aoc(day19, part2)]
 pub fn part2(reports: &[Report]) -> i32 {
-    let (_, scanners) = solve(reports);
-    scanners
+    let solver = Solver::new(reports.iter().collect())
+        .step()
+        .expect("no solution");
+    solver
+        .scanners
         .iter()
         .enumerate()
         .flat_map(|(i, left)| {
-            scanners
+            solver
+                .scanners
                 .iter()
                 .skip(i + 1)
                 .map(|right| (left.position - right.position).manhattan_distance())
