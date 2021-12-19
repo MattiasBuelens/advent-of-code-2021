@@ -224,6 +224,15 @@ impl Vector3D {
     pub fn z(&self) -> i32 {
         self.coords[2]
     }
+
+    pub fn cross_product(self, other: Vector3D) -> Vector3D {
+        // https://en.wikipedia.org/wiki/Cross_product
+        Vector3D::new(
+            self.y() * other.z() - self.z() * other.y(),
+            self.z() * other.x() - self.x() * other.z(),
+            self.x() * other.y() - self.y() * other.x(),
+        )
+    }
 }
 
 #[cfg(test)]

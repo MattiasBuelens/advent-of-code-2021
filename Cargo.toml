@@ -17,3 +17,4 @@ multimap = { version = "0.8.3", default-features = false }
 pathfinding = "0.8.2"
 bitreader = "0.3.4"
 regex = "1.5.4"
+itertools = "0.10.3"

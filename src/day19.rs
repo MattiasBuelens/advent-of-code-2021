@@ -1,5 +1,7 @@
 use std::str::FromStr;
 
+use itertools::Itertools;
+
 use crate::util::Vector3D;
 
 #[derive(Debug)]
@@ -38,6 +40,63 @@ impl FromStr for Report {
             beacons,
         })
     }
+}
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+enum Axis {
+    X,
+    Y,
+    Z,
+}
+
+impl Axis {
+    pub fn unit(&self) -> Vector3D {
+        match self {
+            Axis::X => Vector3D::new(1, 0, 0),
+            Axis::Y => Vector3D::new(0, 1, 0),
+            Axis::Z => Vector3D::new(0, 0, 1),
+        }
+    }
+}
+
+#[derive(Debug)]
+struct Basis {
+    x: Vector3D,
+    y: Vector3D,
+    z: Vector3D,
+}
+
+impl Basis {
+    pub fn apply(&self, pos: Vector3D) -> Vector3D {
+        // https://en.wikipedia.org/wiki/Change_of_basis
+        Vector3D::new(
+            self.x.x() * pos.x() + self.y.x() * pos.y() + self.z.x() * pos.z(),
+            self.x.y() * pos.x() + self.y.y() * pos.y() + self.z.y() * pos.z(),
+            self.x.z() * pos.x() + self.y.z() * pos.y() + self.z.z() * pos.z(),
+        )
+    }
+}
+
+fn get_rotations() -> [Basis; 24] {
+    let all_axis = [Axis::X, Axis::Y, Axis::Z];
+    all_axis
+        .into_iter()
+        .cartesian_product(all_axis)
+        .filter(|(x, y)| x != y)
+        .flat_map(|(x_axis, y_axis)| {
+            let x_unit = x_axis.unit();
+            let y_unit = y_axis.unit();
+            [x_unit, -x_unit]
+                .into_iter()
+                .cartesian_product([y_unit, -y_unit])
+                .map(|(x, y)| {
+                    let z = x.cross_product(y);
+                    Basis { x, y, z }
+                })
+        })
+        .collect::<Vec<_>>()
+        .try_into()
+        .unwrap()
 }
 
 #[aoc_generator(day19)]
