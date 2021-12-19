@@ -174,20 +174,19 @@ impl<'a> Solver<'a> {
                         if matching_beacons >= 12 {
                             // Found a match!
                             // Add new beacons, and recurse with remaining reports
-                            let mut new_beacons = beacons.clone();
-                            new_beacons
-                                .extend(report.beacons.iter().map(|pos| state.transform(*pos)));
-                            let mut new_scanners = scanners.clone();
-                            new_scanners.push(state);
-                            let remaining_reports = reports
+                            let mut beacons = beacons.clone();
+                            beacons.extend(report.beacons.iter().map(|pos| state.transform(*pos)));
+                            let mut scanners = scanners.clone();
+                            scanners.push(state);
+                            let reports = reports
                                 .iter()
                                 .filter(|x| x.scanner_id != scanner_id)
                                 .cloned()
                                 .collect();
                             let new_solver = Self {
-                                beacons: new_beacons,
-                                scanners: new_scanners,
-                                reports: remaining_reports,
+                                beacons,
+                                scanners,
+                                reports,
                             };
                             if let result @ Some(_) = new_solver.step() {
                                 return result;
