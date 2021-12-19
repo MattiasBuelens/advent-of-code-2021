@@ -42,23 +42,6 @@ impl FromStr for Report {
     }
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
-enum Axis {
-    X,
-    Y,
-    Z,
-}
-
-impl Axis {
-    pub fn unit(&self) -> Vector3D {
-        match self {
-            Axis::X => Vector3D::new(1, 0, 0),
-            Axis::Y => Vector3D::new(0, 1, 0),
-            Axis::Z => Vector3D::new(0, 0, 1),
-        }
-    }
-}
-
 #[derive(Debug)]
 struct Basis {
     x: Vector3D,
@@ -78,14 +61,16 @@ impl Basis {
 }
 
 fn get_rotations() -> [Basis; 24] {
-    let all_axis = [Axis::X, Axis::Y, Axis::Z];
+    let all_axis = [
+        Vector3D::new(1, 0, 0),
+        Vector3D::new(0, 1, 0),
+        Vector3D::new(0, 0, 1),
+    ];
     all_axis
         .into_iter()
         .cartesian_product(all_axis)
         .filter(|(x, y)| x != y)
-        .flat_map(|(x_axis, y_axis)| {
-            let x_unit = x_axis.unit();
-            let y_unit = y_axis.unit();
+        .flat_map(|(x_unit, y_unit)| {
             [x_unit, -x_unit]
                 .into_iter()
                 .cartesian_product([y_unit, -y_unit])
