@@ -138,7 +138,7 @@ fn step(
                         .beacons
                         .iter()
                         .map(|pos| state.transform(*pos))
-                        .filter(|pos| beacons.contains(&pos))
+                        .filter(|pos| beacons.contains(pos))
                         .count();
                     debug_assert!(matching_beacons >= 1, "at least one beacon should match");
                     if matching_beacons >= 12 {
@@ -219,13 +219,13 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        let input = input_generator(&TEST_INPUT);
+        let input = input_generator(TEST_INPUT);
         assert_eq!(part1(&input), 79);
     }
 
     #[test]
     fn test_part2() {
-        let input = input_generator(&TEST_INPUT);
+        let input = input_generator(TEST_INPUT);
         assert_eq!(part2(&input), 3621);
     }
 }
