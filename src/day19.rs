@@ -98,7 +98,9 @@ pub fn input_generator(input: &str) -> Vec<Report> {
         .collect()
 }
 
+#[derive(Debug, Clone)]
 struct ScannerState {
+    scanner_id: u8,
     position: Vector3D,
     rotation: Basis,
 }
@@ -111,13 +113,15 @@ impl ScannerState {
 
 fn step(
     beacons: HashSet<Vector3D>,
+    scanners: Vec<ScannerState>,
     reports: Vec<&Report>,
-) -> Option<(HashSet<Vector3D>, Vec<&Report>)> {
+) -> Option<(HashSet<Vector3D>, Vec<ScannerState>, Vec<&Report>)> {
     if reports.is_empty() {
         // All done!
-        return Some((beacons, reports));
+        return Some((beacons, scanners, reports));
     }
     for report in reports.iter() {
+        let scanner_id = report.scanner_id;
         // Pick a matching beacon
         for &relative_beacon in report.beacons.iter() {
             for &absolute_beacon in beacons.iter() {
@@ -125,7 +129,11 @@ fn step(
                 for &rotation in ROTATIONS.iter() {
                     // position + (relative beacon * rotation) = absolute beacon
                     let position = absolute_beacon - rotation.apply(relative_beacon);
-                    let state = ScannerState { position, rotation };
+                    let state = ScannerState {
+                        scanner_id,
+                        position,
+                        rotation,
+                    };
                     let matching_beacons = report
                         .beacons
                         .iter()
@@ -138,12 +146,15 @@ fn step(
                         // Add new beacons, and recurse with remaining reports
                         let mut new_beacons = beacons.clone();
                         new_beacons.extend(report.beacons.iter().map(|pos| state.transform(*pos)));
+                        let mut new_scanners = scanners.clone();
+                        new_scanners.push(state);
                         let remaining_reports = reports
                             .iter()
-                            .filter(|x| x.scanner_id != report.scanner_id)
+                            .filter(|x| x.scanner_id != scanner_id)
                             .cloned()
                             .collect();
-                        if let result @ Some(_) = step(new_beacons, remaining_reports) {
+                        if let result @ Some(_) = step(new_beacons, new_scanners, remaining_reports)
+                        {
                             return result;
                         }
                     }
@@ -155,29 +166,49 @@ fn step(
     None
 }
 
-#[aoc(day19, part1)]
-pub fn part1(reports: &[Report]) -> usize {
+fn solve(reports: &[Report]) -> (HashSet<Vector3D>, Vec<ScannerState>) {
     let mut reports = reports.to_vec();
+
     // Set scanner 0 at (0,0,0) with default orientation
-    let first_state = ScannerState {
+    let first_report = reports.remove(0);
+    let first_scanner = ScannerState {
+        scanner_id: first_report.scanner_id,
         position: Vector3D::zero(),
         rotation: ROTATIONS[0],
     };
-    let first_beacons = reports
-        .remove(0)
+    let first_beacons = first_report
         .beacons
         .into_iter()
-        .map(|pos| first_state.transform(pos))
+        .map(|pos| first_scanner.transform(pos))
         .collect();
+
     // Solve
-    let (beacons, _) = step(first_beacons, reports.iter().collect()).expect("no solution");
-    // Count number of beacons
+    let (beacons, scanners, _) =
+        step(first_beacons, vec![first_scanner], reports.iter().collect()).expect("no solution");
+
+    (beacons, scanners)
+}
+
+#[aoc(day19, part1)]
+pub fn part1(reports: &[Report]) -> usize {
+    let (beacons, _) = solve(reports);
     beacons.len()
 }
 
 #[aoc(day19, part2)]
-pub fn part2(input: &[Report]) -> i32 {
-    todo!()
+pub fn part2(reports: &[Report]) -> i32 {
+    let (_, scanners) = solve(reports);
+    scanners
+        .iter()
+        .enumerate()
+        .flat_map(|(i, left)| {
+            scanners
+                .iter()
+                .skip(i + 1)
+                .map(|right| (left.position - right.position).manhattan_distance())
+        })
+        .max()
+        .unwrap()
 }
 
 #[cfg(test)]
@@ -195,6 +226,6 @@ mod tests {
     #[test]
     fn test_part2() {
         let input = input_generator(&TEST_INPUT);
-        assert_eq!(part2(&input), 0);
+        assert_eq!(part2(&input), 3621);
     }
 }
