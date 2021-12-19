@@ -141,64 +141,64 @@ impl<'a> Solver<'a> {
     }
 
     pub fn step(mut self) -> Option<Self> {
-    let Self {
-        beacons,
-        scanners,
-        reports,
-    } = &mut self;
-    if reports.is_empty() {
-        // All done!
-        return Some(self);
-    }
-    for report in reports.iter() {
-        let scanner_id = report.scanner_id;
-        // Pick a matching beacon
-        for &relative_beacon in report.beacons.iter() {
-            for &absolute_beacon in beacons.iter() {
-                // Pick an orientation
-                for &rotation in ROTATIONS.iter() {
-                    // position + (relative beacon * rotation) = absolute beacon
-                    let position = absolute_beacon - rotation.apply(relative_beacon);
-                    let state = ScannerState {
-                        scanner_id,
-                        position,
-                        rotation,
-                    };
-                    let matching_beacons = report
-                        .beacons
-                        .iter()
-                        .map(|pos| state.transform(*pos))
-                        .filter(|pos| beacons.contains(pos))
-                        .count();
-                    debug_assert!(matching_beacons >= 1, "at least one beacon should match");
-                    if matching_beacons >= 12 {
-                        // Found a match!
-                        // Add new beacons, and recurse with remaining reports
-                        let mut new_beacons = beacons.clone();
-                        new_beacons
-                            .extend(report.beacons.iter().map(|pos| state.transform(*pos)));
-                        let mut new_scanners = scanners.clone();
-                        new_scanners.push(state);
-                        let remaining_reports = reports
-                            .iter()
-                            .filter(|x| x.scanner_id != scanner_id)
-                            .cloned()
-                            .collect();
-                        let new_solver = Self {
-                            beacons: new_beacons,
-                            scanners: new_scanners,
-                            reports: remaining_reports,
+        let Self {
+            beacons,
+            scanners,
+            reports,
+        } = &mut self;
+        if reports.is_empty() {
+            // All done!
+            return Some(self);
+        }
+        for report in reports.iter() {
+            let scanner_id = report.scanner_id;
+            // Pick a matching beacon
+            for &relative_beacon in report.beacons.iter() {
+                for &absolute_beacon in beacons.iter() {
+                    // Pick an orientation
+                    for &rotation in ROTATIONS.iter() {
+                        // position + (relative beacon * rotation) = absolute beacon
+                        let position = absolute_beacon - rotation.apply(relative_beacon);
+                        let state = ScannerState {
+                            scanner_id,
+                            position,
+                            rotation,
                         };
-                        if let result @ Some(_) = new_solver.step() {
-                            return result;
+                        let matching_beacons = report
+                            .beacons
+                            .iter()
+                            .map(|pos| state.transform(*pos))
+                            .filter(|pos| beacons.contains(pos))
+                            .count();
+                        debug_assert!(matching_beacons >= 1, "at least one beacon should match");
+                        if matching_beacons >= 12 {
+                            // Found a match!
+                            // Add new beacons, and recurse with remaining reports
+                            let mut new_beacons = beacons.clone();
+                            new_beacons
+                                .extend(report.beacons.iter().map(|pos| state.transform(*pos)));
+                            let mut new_scanners = scanners.clone();
+                            new_scanners.push(state);
+                            let remaining_reports = reports
+                                .iter()
+                                .filter(|x| x.scanner_id != scanner_id)
+                                .cloned()
+                                .collect();
+                            let new_solver = Self {
+                                beacons: new_beacons,
+                                scanners: new_scanners,
+                                reports: remaining_reports,
+                            };
+                            if let result @ Some(_) = new_solver.step() {
+                                return result;
+                            }
                         }
                     }
                 }
             }
         }
-    }
-    // No matching report found, discard this
-    None
+        // No matching report found, discard this
+        None
     }
 }
 
