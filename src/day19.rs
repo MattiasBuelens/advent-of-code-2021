@@ -140,12 +140,10 @@ impl<'a> Solver<'a> {
         }
     }
 
-    pub fn step(mut self) -> Option<Self> {
+    pub fn step(self) -> Option<Self> {
         let Self {
-            beacons,
-            scanners,
-            reports,
-        } = &mut self;
+            beacons, reports, ..
+        } = &self;
         if reports.is_empty() {
             // All done!
             return Some(self);
@@ -174,21 +172,9 @@ impl<'a> Solver<'a> {
                         if matching_beacons >= 12 {
                             // Found a match!
                             // Add new beacons, and recurse with remaining reports
-                            let mut beacons = beacons.clone();
-                            beacons.extend(report.beacons.iter().map(|pos| state.transform(*pos)));
-                            let mut scanners = scanners.clone();
-                            scanners.push(state);
-                            let reports = reports
-                                .iter()
-                                .filter(|x| x.scanner_id != scanner_id)
-                                .cloned()
-                                .collect();
-                            let new_solver = Self {
-                                beacons,
-                                scanners,
-                                reports,
-                            };
-                            if let result @ Some(_) = new_solver.step() {
+                            let mut solver = self.clone();
+                            solver.add_scanner(state, &report.beacons);
+                            if let result @ Some(_) = solver.step() {
                                 return result;
                             }
                         }
@@ -198,6 +184,17 @@ impl<'a> Solver<'a> {
         }
         // No matching report found, discard this
         None
+    }
+
+    fn add_scanner(&mut self, scanner_state: ScannerState, scanner_beacons: &[Vector3D]) {
+        self.beacons.extend(
+            scanner_beacons
+                .iter()
+                .map(|pos| scanner_state.transform(*pos)),
+        );
+        self.reports
+            .retain(|x| x.scanner_id != scanner_state.scanner_id);
+        self.scanners.push(scanner_state);
     }
 }
 
