@@ -133,8 +133,13 @@ pub fn part1((algorithm, image): &Input) -> usize {
 }
 
 #[aoc(day20, part2)]
-pub fn part2((algorithm, image): &Input) -> i32 {
-    todo!()
+pub fn part2((algorithm, image): &Input) -> usize {
+    let mut image = image.clone();
+    for _ in 1..=50 {
+        image = image.enhance(algorithm);
+    }
+    assert!(!image.infinite);
+    image.contents.len()
 }
 
 #[cfg(test)]
@@ -168,6 +173,6 @@ mod tests {
     #[test]
     fn test_part2() {
         let input = input_generator(&TEST_INPUT);
-        assert_eq!(part2(&input), 0);
+        assert_eq!(part2(&input), 3351);
     }
 }
