@@ -24,8 +24,8 @@ pub fn input_generator(input: &str) -> Input {
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 struct GameState {
     positions: [u8; 2],
-    scores: [u32; 2],
-    current_player: u8,
+    scores: [u16; 2],
+    current_player: bool,
 }
 
 impl GameState {
@@ -33,16 +33,17 @@ impl GameState {
         Self {
             positions: [start1, start2],
             scores: [0, 0],
-            current_player: 0,
+            current_player: false,
         }
     }
 
     pub fn step(&mut self, die_roll: u8) {
-        let position = &mut self.positions[self.current_player as usize];
-        let score = &mut self.scores[self.current_player as usize];
+        let index = if self.current_player { 1usize } else { 0usize };
+        let position = &mut self.positions[index];
+        let score = &mut self.scores[index];
         *position = (*position + die_roll - 1) % 10 + 1;
-        *score += *position as u32;
-        self.current_player = if self.current_player == 0 { 1 } else { 0 };
+        *score += *position as u16;
+        self.current_player = !self.current_player;
     }
 
     pub fn is_done_part1(&self) -> bool {
@@ -97,7 +98,7 @@ impl Game1 {
     }
 
     pub fn result(&self) -> u32 {
-        let losing_score = *self.state.scores.iter().min().unwrap();
+        let losing_score = *self.state.scores.iter().min().unwrap() as u32;
         losing_score * self.die_rolls
     }
 }
