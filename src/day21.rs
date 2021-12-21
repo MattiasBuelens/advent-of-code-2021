@@ -141,9 +141,7 @@ impl Ord for GameState {
             .then_with(|| other.scores.iter().max().cmp(&self.scores.iter().max()))
             .then_with(|| {
                 // Use other fields to break ties and ensure consistency with Eq.
-                self.scores
-                    .cmp(&other.scores)
-                    .then_with(|| self.positions.cmp(&other.positions))
+                self.positions.cmp(&other.positions)
                     .then_with(|| self.current_player.cmp(&other.current_player))
             })
     }
