@@ -142,7 +142,8 @@ impl Ord for GameState {
             .then_with(|| other.scores.iter().max().cmp(&self.scores.iter().max()))
             .then_with(|| {
                 // Use other fields to break ties and ensure consistency with Eq.
-                self.positions.cmp(&other.positions)
+                self.positions
+                    .cmp(&other.positions)
                     .then_with(|| self.current_player.cmp(&other.current_player))
             })
     }
@@ -163,6 +164,9 @@ pub fn part2(&(start1, start2): &Input) -> u64 {
     queue.push(start_state.clone());
     state_counts.insert(start_state, 1);
 
+    let mut player1_wins = 0;
+    let mut player2_wins = 0;
+
     while let Some(state) = queue.pop() {
         debug_assert!(!state.is_done_part2());
         let state_count = *state_counts.get(&state).expect("missing state count");
@@ -173,25 +177,22 @@ pub fn part2(&(start1, start2): &Input) -> u64 {
             }
             let mut new_state = state.clone();
             new_state.step(roll as u8);
+            let new_state_count = state_count * roll_count;
             // If game is done, stop expanding it.
-            // If we already have a count for this state, then it must already be in the queue.
-            if !new_state.is_done_part2() && !state_counts.contains_key(&new_state) {
-                queue.push(new_state.clone());
+            if new_state.did_player1_win_part2() {
+                player1_wins += new_state_count;
+            } else if new_state.did_player2_win_part2() {
+                player2_wins += new_state_count;
+            } else {
+                // If we already have a count for this state, then it must already be in the queue.
+                if !state_counts.contains_key(&new_state) {
+                    queue.push(new_state.clone());
+                }
+                *state_counts.entry(new_state).or_default() += new_state_count;
             }
-            *state_counts.entry(new_state).or_default() += state_count * roll_count;
         }
     }
 
-    let player1_wins = state_counts
-        .iter()
-        .filter(|(state, _)| state.did_player1_win_part2())
-        .map(|(_, &count)| count)
-        .sum::<u64>();
-    let player2_wins = state_counts
-        .iter()
-        .filter(|(state, _)| state.did_player2_win_part2())
-        .map(|(_, &count)| count)
-        .sum::<u64>();
     max(player1_wins, player2_wins)
 }
 
