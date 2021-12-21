@@ -177,7 +177,7 @@ pub fn part2(&(start1, start2): &Input) -> u64 {
             if !new_state.is_done_part2() && !state_counts.contains_key(&new_state) {
                 queue.push(new_state.clone());
             }
-            *state_counts.entry(new_state.clone()).or_default() += state_count * roll_count;
+            *state_counts.entry(new_state).or_default() += state_count * roll_count;
         }
     }
 
