@@ -128,18 +128,24 @@ lazy_static! {
 }
 
 // The priority queue depends on `Ord`.
-// Explicitly implement the trait so the queue becomes a min-heap
-// instead of a max-heap.
+// Explicitly implement the trait so the queue becomes a min-heap instead of a max-heap.
 impl Ord for GameState {
     fn cmp(&self, other: &Self) -> Ordering {
         // Put the state with the smallest scores first.
         // All previous states that *could* end up in this state will be sorted *before* this state.
-        // Use other fields to break ties and ensure consistency with Eq.
-        other.scores.iter().min().cmp(&self.scores.iter().min())
+        other
+            .scores
+            .iter()
+            .min()
+            .cmp(&self.scores.iter().min())
             .then_with(|| other.scores.iter().max().cmp(&self.scores.iter().max()))
-            .then_with(|| self.scores.cmp(&other.scores))
-            .then_with(|| self.positions.cmp(&other.positions))
-            .then_with(|| self.current_player.cmp(&other.current_player))
+            .then_with(|| {
+                // Use other fields to break ties and ensure consistency with Eq.
+                self.scores
+                    .cmp(&other.scores)
+                    .then_with(|| self.positions.cmp(&other.positions))
+                    .then_with(|| self.current_player.cmp(&other.current_player))
+            })
     }
 }
 
