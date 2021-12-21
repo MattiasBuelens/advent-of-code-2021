@@ -1,5 +1,5 @@
 use std::cmp::{max, Ordering};
-use std::collections::{BinaryHeap, HashMap, HashSet};
+use std::collections::{BinaryHeap, HashMap};
 
 use lazy_static::*;
 
@@ -156,29 +156,28 @@ impl PartialOrd for GameState {
 #[aoc(day21, part2)]
 pub fn part2(&(start1, start2): &Input) -> u64 {
     let mut state_counts = HashMap::<GameState, u64>::new();
-
     let mut queue = BinaryHeap::<GameState>::new();
-    let mut queue_set = HashSet::<GameState>::new();
 
     let start_state = GameState::new(start1, start2);
     queue.push(start_state.clone());
-    queue_set.insert(start_state.clone());
     state_counts.insert(start_state, 1);
 
     while let Some(state) = queue.pop() {
-        queue_set.remove(&state);
+        debug_assert!(!state.is_done_part2());
         let state_count = *state_counts.get(&state).expect("missing state count");
+        // Expand to next step with all possible quantum rolls
         for (roll, &roll_count) in QUANTUM_ROLLS.iter().enumerate() {
             if roll_count == 0 {
                 continue;
             }
             let mut new_state = state.clone();
             new_state.step(roll as u8);
-            *state_counts.entry(new_state.clone()).or_default() += state_count * roll_count;
-            if !new_state.is_done_part2() && !queue_set.contains(&new_state) {
+            // If game is done, stop expanding it.
+            // If we already have a count for this state, then it must already be in the queue.
+            if !new_state.is_done_part2() && !state_counts.contains_key(&new_state) {
                 queue.push(new_state.clone());
-                queue_set.insert(new_state);
             }
+            *state_counts.entry(new_state.clone()).or_default() += state_count * roll_count;
         }
     }
 
