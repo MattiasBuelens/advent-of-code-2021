@@ -16,33 +16,54 @@ pub fn input_generator(input: &str) -> Input {
     (start1.parse().unwrap(), start2.parse().unwrap())
 }
 
-#[derive(Debug)]
-struct Game {
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+struct GameState {
     positions: [u8; 2],
     scores: [u32; 2],
     current_player: u8,
-    next_die: u8,
-    die_rolls: u32,
 }
 
-impl Game {
+impl GameState {
     pub fn new(start1: u8, start2: u8) -> Self {
         Self {
             positions: [start1, start2],
             scores: [0, 0],
             current_player: 0,
+        }
+    }
+
+    pub fn step(&mut self, die_roll: u8) {
+        let position = &mut self.positions[self.current_player as usize];
+        let score = &mut self.scores[self.current_player as usize];
+        *position = (*position + die_roll - 1) % 10 + 1;
+        *score += *position as u32;
+        self.current_player = if self.current_player == 0 { 1 } else { 0 };
+    }
+
+    pub fn is_done_part1(&self) -> bool {
+        self.state.scores.iter().any(|&score| score >= 1000)
+    }
+}
+
+#[derive(Debug)]
+struct Game1 {
+    state: GameState,
+    next_die: u8,
+    die_rolls: u32,
+}
+
+impl Game1 {
+    pub fn new(start1: u8, start2: u8) -> Self {
+        Self {
+            state: GameState::new(start1, start2),
             next_die: 1,
             die_rolls: 0,
         }
     }
 
     pub fn step(&mut self) {
-        let steps = (0..3).map(|_| self.roll_die()).sum::<u8>();
-        let position = &mut self.positions[self.current_player as usize];
-        let score = &mut self.scores[self.current_player as usize];
-        *position = (*position + steps - 1) % 10 + 1;
-        *score += *position as u32;
-        self.current_player = if self.current_player == 0 { 1 } else { 0 };
+        let die_roll = (0..3).map(|_| self.roll_die()).sum::<u8>();
+        self.state.step(die_roll);
     }
 
     pub fn roll_die(&mut self) -> u8 {
@@ -55,18 +76,18 @@ impl Game {
     }
 
     pub fn is_done(&self) -> bool {
-        self.scores.iter().any(|&score| score >= 1000)
+        self.state.is_done_part1()
     }
 
     pub fn result(&self) -> u32 {
-        let losing_score = *self.scores.iter().min().unwrap();
+        let losing_score = *self.state.scores.iter().min().unwrap();
         losing_score * self.die_rolls
     }
 }
 
 #[aoc(day21, part1)]
 pub fn part1(&(start1, start2): &Input) -> u32 {
-    let mut game = Game::new(start1, start2);
+    let mut game = Game1::new(start1, start2);
     while !game.is_done() {
         game.step();
     }
