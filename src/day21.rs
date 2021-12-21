@@ -1,4 +1,9 @@
-type Input = (u8, u8);
+use std::cmp::{max, Ordering};
+use std::collections::{BinaryHeap, HashMap, HashSet};
+
+use lazy_static::*;
+
+pub type Input = (u8, u8);
 
 #[aoc_generator(day21)]
 pub fn input_generator(input: &str) -> Input {
@@ -41,7 +46,19 @@ impl GameState {
     }
 
     pub fn is_done_part1(&self) -> bool {
-        self.state.scores.iter().any(|&score| score >= 1000)
+        self.scores.iter().any(|&score| score >= 1000)
+    }
+
+    pub fn is_done_part2(&self) -> bool {
+        self.did_player1_win_part2() || self.did_player2_win_part2()
+    }
+
+    pub fn did_player1_win_part2(&self) -> bool {
+        self.scores[0] >= 21
+    }
+
+    pub fn did_player2_win_part2(&self) -> bool {
+        self.scores[1] >= 21
     }
 }
 
@@ -94,9 +111,84 @@ pub fn part1(&(start1, start2): &Input) -> u32 {
     game.result()
 }
 
+fn roll_three_quantom_dies() -> [u64; 10] {
+    let mut counts = [0u64; 10];
+    for a in 1..=3 {
+        for b in 1..=3 {
+            for c in 1..=3 {
+                counts[a + b + c] += 1;
+            }
+        }
+    }
+    counts
+}
+
+lazy_static! {
+    static ref QUANTUM_ROLLS: [u64; 10] = roll_three_quantom_dies();
+}
+
+// The priority queue depends on `Ord`.
+// Explicitly implement the trait so the queue becomes a min-heap
+// instead of a max-heap.
+impl Ord for GameState {
+    fn cmp(&self, other: &Self) -> Ordering {
+        // Put the state with the smallest scores first.
+        // All previous states that *could* end up in this state will be sorted *before* this state.
+        // Use other fields to break ties and ensure consistency with Eq.
+        other.scores.iter().min().cmp(&self.scores.iter().min())
+            .then_with(|| other.scores.iter().max().cmp(&self.scores.iter().max()))
+            .then_with(|| self.scores.cmp(&other.scores))
+            .then_with(|| self.positions.cmp(&other.positions))
+            .then_with(|| self.current_player.cmp(&other.current_player))
+    }
+}
+
+impl PartialOrd for GameState {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
 #[aoc(day21, part2)]
-pub fn part2(&(start1, start2): &Input) -> i32 {
-    todo!()
+pub fn part2(&(start1, start2): &Input) -> u64 {
+    let mut state_counts = HashMap::<GameState, u64>::new();
+
+    let mut queue = BinaryHeap::<GameState>::new();
+    let mut queue_set = HashSet::<GameState>::new();
+
+    let start_state = GameState::new(start1, start2);
+    queue.push(start_state.clone());
+    queue_set.insert(start_state.clone());
+    state_counts.insert(start_state, 1);
+
+    while let Some(state) = queue.pop() {
+        queue_set.remove(&state);
+        let state_count = *state_counts.get(&state).expect("missing state count");
+        for (roll, &roll_count) in QUANTUM_ROLLS.iter().enumerate() {
+            if roll_count == 0 {
+                continue;
+            }
+            let mut new_state = state.clone();
+            new_state.step(roll as u8);
+            *state_counts.entry(new_state.clone()).or_default() += state_count * roll_count;
+            if !new_state.is_done_part2() && !queue_set.contains(&new_state) {
+                queue.push(new_state.clone());
+                queue_set.insert(new_state);
+            }
+        }
+    }
+
+    let player1_wins = state_counts
+        .iter()
+        .filter(|(state, _)| state.did_player1_win_part2())
+        .map(|(_, &count)| count)
+        .sum::<u64>();
+    let player2_wins = state_counts
+        .iter()
+        .filter(|(state, _)| state.did_player2_win_part2())
+        .map(|(_, &count)| count)
+        .sum::<u64>();
+    max(player1_wins, player2_wins)
 }
 
 #[cfg(test)]
@@ -119,6 +211,6 @@ Player 2 starting position: 8"
     #[test]
     fn test_part2() {
         let input = input_generator(&TEST_INPUT);
-        assert_eq!(part2(&input), 0);
+        assert_eq!(part2(&input), 444356092776315);
     }
 }
