@@ -111,7 +111,7 @@ pub fn part1(&(start1, start2): &Input) -> u32 {
     game.result()
 }
 
-fn roll_three_quantom_dies() -> [u64; 10] {
+fn roll_three_quantum_dies() -> [u64; 10] {
     let mut counts = [0u64; 10];
     for a in 1..=3 {
         for b in 1..=3 {
@@ -124,7 +124,7 @@ fn roll_three_quantom_dies() -> [u64; 10] {
 }
 
 lazy_static! {
-    static ref QUANTUM_ROLLS: [u64; 10] = roll_three_quantom_dies();
+    static ref QUANTUM_ROLLS: [u64; 10] = roll_three_quantum_dies();
 }
 
 // The priority queue depends on `Ord`.
