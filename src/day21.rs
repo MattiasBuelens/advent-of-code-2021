@@ -112,7 +112,7 @@ pub fn part1(&(start1, start2): &Input) -> u32 {
     game.result()
 }
 
-fn roll_three_quantum_dies() -> [u64; 10] {
+fn roll_three_quantum_dies() -> [(u8, u64); 7] {
     let mut counts = [0u64; 10];
     for a in 1..=3 {
         for b in 1..=3 {
@@ -121,11 +121,15 @@ fn roll_three_quantum_dies() -> [u64; 10] {
             }
         }
     }
-    counts
+    counts.into_iter()
+        .enumerate()
+        .filter(|&(_, count)| count != 0)
+        .map(|(roll, count)| (roll as u8, count))
+        .collect::<Vec<_>>().try_into().unwrap()
 }
 
 lazy_static! {
-    static ref QUANTUM_ROLLS: [u64; 10] = roll_three_quantum_dies();
+    static ref QUANTUM_ROLLS: [(u8, u64); 7] = roll_three_quantum_dies();
 }
 
 // The priority queue depends on `Ord`.
@@ -171,10 +175,8 @@ pub fn part2(&(start1, start2): &Input) -> u64 {
         debug_assert!(!state.is_done_part2());
         let state_count = *state_counts.get(&state).expect("missing state count");
         // Expand to next step with all possible quantum rolls
-        for (roll, &roll_count) in QUANTUM_ROLLS.iter().enumerate() {
-            if roll_count == 0 {
-                continue;
-            }
+        for &(roll, roll_count) in QUANTUM_ROLLS.iter() {
+            debug_assert!(roll_count != 0);
             let mut new_state = state.clone();
             new_state.step(roll as u8);
             let new_state_count = state_count * roll_count;
