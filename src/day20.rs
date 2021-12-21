@@ -116,7 +116,7 @@ impl Image {
         if (self.min_x..=self.max_x).contains(&pos.x())
             && (self.min_y..=self.max_y).contains(&pos.y())
         {
-            self.contents.contains(&pos)
+            self.contents.contains(pos)
         } else {
             self.infinite
         }
