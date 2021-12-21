@@ -161,8 +161,15 @@ impl PartialOrd for GameState {
 
 #[aoc(day21, part2)]
 pub fn part2(&(start1, start2): &Input) -> u64 {
-    let mut state_counts = HashMap::<GameState, u64>::new();
-    let mut queue = BinaryHeap::<GameState>::new();
+    // The total number of non-winning states
+    let total_states = 21 * 21 * 10 * 10 * 2;
+
+    let mut state_counts = HashMap::<GameState, u64>::with_capacity(
+        total_states
+    );
+    let mut queue = BinaryHeap::<GameState>::with_capacity(total_states);
+    let counts_capacity = state_counts.capacity();
+    let queue_capacity = queue.capacity();
 
     let start_state = GameState::new(start1, start2);
     queue.push(start_state.clone());
@@ -194,6 +201,10 @@ pub fn part2(&(start1, start2): &Input) -> u64 {
             }
         }
     }
+
+    // Check that we did not reallocate
+    assert_eq!(state_counts.capacity(), counts_capacity);
+    assert_eq!(queue.capacity(), queue_capacity);
 
     max(player1_wins, player2_wins)
 }
