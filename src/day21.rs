@@ -121,11 +121,14 @@ fn roll_three_quantum_dies() -> [(u8, u64); 7] {
             }
         }
     }
-    counts.into_iter()
+    counts
+        .into_iter()
         .enumerate()
         .filter(|&(_, count)| count != 0)
         .map(|(roll, count)| (roll as u8, count))
-        .collect::<Vec<_>>().try_into().unwrap()
+        .collect::<Vec<_>>()
+        .try_into()
+        .unwrap()
 }
 
 lazy_static! {
@@ -164,9 +167,7 @@ pub fn part2(&(start1, start2): &Input) -> u64 {
     // The total number of non-winning states
     let total_states = 21 * 21 * 10 * 10 * 2;
 
-    let mut state_counts = HashMap::<GameState, u64>::with_capacity(
-        total_states
-    );
+    let mut state_counts = HashMap::<GameState, u64>::with_capacity(total_states);
     let mut queue = BinaryHeap::<GameState>::with_capacity(total_states);
     let counts_capacity = state_counts.capacity();
     let queue_capacity = queue.capacity();
