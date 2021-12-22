@@ -1,4 +1,5 @@
 use std::collections::HashSet;
+use std::iter::once;
 use std::ops::RangeInclusive;
 
 use itertools::Either;
@@ -178,10 +179,17 @@ pub fn part2(steps: &[RebootStep]) -> u64 {
             // If cuboid overlaps with current step, remove it from the list
             // and store the split parts that are *outside* of the current step
             if cuboid.overlaps(reboot_cuboid) {
-                let remainder = cuboid
-                    .split(reboot_cuboid.top_left())
-                    .flat_map(|x| x.split(reboot_cuboid.bottom_right() + Vector3D::new(1, 1, 1)))
-                    .filter(|x| !x.overlaps(reboot_cuboid));
+                let remainder = cuboid.split(reboot_cuboid.top_left()).flat_map(|cuboid| {
+                    if cuboid.overlaps(reboot_cuboid) {
+                        Either::Left(
+                            cuboid
+                                .split(reboot_cuboid.bottom_right() + Vector3D::new(1, 1, 1))
+                                .filter(|cuboid| !cuboid.overlaps(reboot_cuboid)),
+                        )
+                    } else {
+                        Either::Right(once(cuboid))
+                    }
+                });
                 splits.extend(remainder);
                 false
             } else {
