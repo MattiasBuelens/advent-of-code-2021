@@ -1,7 +1,10 @@
+use std::collections::HashSet;
 use std::ops::RangeInclusive;
 
 use lazy_static::*;
 use regex::Regex;
+
+use crate::util::Vector3D;
 
 #[derive(Debug, Clone)]
 pub struct Cuboid {
@@ -37,8 +40,32 @@ pub fn input_generator(input: &str) -> Vec<RebootStep> {
 }
 
 #[aoc(day22, part1)]
-pub fn part1(input: &[RebootStep]) -> i32 {
-    todo!()
+pub fn part1(steps: &[RebootStep]) -> usize {
+    let mut cubes = HashSet::<Vector3D>::new();
+    for RebootStep(on, cuboid) in steps {
+        for x in cuboid.x.clone() {
+            if x.abs() > 50 {
+                continue;
+            }
+            for y in cuboid.y.clone() {
+                if y.abs() > 50 {
+                    continue;
+                }
+                for z in cuboid.z.clone() {
+                    if z.abs() > 50 {
+                        continue;
+                    }
+                    let pos = Vector3D::new(x, y, z);
+                    if *on {
+                        cubes.insert(pos);
+                    } else {
+                        cubes.remove(&pos);
+                    }
+                }
+            }
+        }
+    }
+    cubes.len()
 }
 
 #[aoc(day22, part2)]
@@ -62,7 +89,7 @@ on x=10..10,y=10..10,z=10..10"
     #[test]
     fn test_part1() {
         let input = input_generator(&TEST_INPUT);
-        assert_eq!(part1(&input), 0);
+        assert_eq!(part1(&input), 39);
     }
 
     #[test]
