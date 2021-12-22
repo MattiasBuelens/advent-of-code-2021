@@ -53,10 +53,6 @@ impl Cuboid {
         self.z.0..=self.z.1
     }
 
-    pub fn contains(&self, pos: &Vector3D) -> bool {
-        self.xs().contains(&pos.x()) && self.ys().contains(&pos.y()) && self.zs().contains(&pos.z())
-    }
-
     pub fn overlaps(&self, other: &Cuboid) -> bool {
         self.x.0 <= other.x.1
             && other.x.0 <= self.x.1
