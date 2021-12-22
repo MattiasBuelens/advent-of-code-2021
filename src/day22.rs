@@ -196,7 +196,7 @@ pub fn part2(steps: &[RebootStep]) -> u64 {
         cuboids.extend(splits);
         // Add the step's cuboid if it's on
         if *on {
-            cuboids.push(reboot_cuboid.clone());
+            cuboids.push(*reboot_cuboid);
         }
     }
     cuboids.iter().map(|x| x.volume()).sum()
@@ -372,7 +372,7 @@ on x=10..10,y=10..10,z=10..10"
 
     #[test]
     fn test_part2() {
-        let input = input_generator(&LARGE_INPUT);
+        let input = input_generator(LARGE_INPUT);
         assert_eq!(part2(&input), 2758514936282235);
     }
 
@@ -381,7 +381,7 @@ on x=10..10,y=10..10,z=10..10"
         let input = input_generator(&SMALL_INPUT);
         assert_eq!(part2_using_part1(&input), 39);
 
-        let input = input_generator(&LARGE_INPUT);
+        let input = input_generator(LARGE_INPUT);
         assert_eq!(part2_using_part1(&input), 474140);
     }
 }
