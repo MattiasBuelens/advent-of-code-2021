@@ -111,7 +111,9 @@ impl Cuboid {
     /// Split the cuboid into two halves such that one half only contains points < X,
     /// and the other half only contains points >= X.
     pub fn split_x(self, x: i32) -> Either<[Self; 1], [Self; 2]> {
-        if self.x.0 < x && x <= self.x.1 {
+        if x <= self.x.0 || x > self.x.1 {
+            Either::Left([self])
+        } else {
             Either::Right([
                 Cuboid {
                     x: (self.x.0, x - 1),
@@ -122,13 +124,13 @@ impl Cuboid {
                     ..self
                 },
             ])
-        } else {
-            Either::Left([self])
         }
     }
 
     pub fn split_y(self, y: i32) -> Either<[Self; 1], [Self; 2]> {
-        if self.y.0 < y && y <= self.y.1 {
+        if y <= self.y.0 || y > self.y.1 {
+            Either::Left([self])
+        } else {
             Either::Right([
                 Cuboid {
                     y: (self.y.0, y - 1),
@@ -139,13 +141,13 @@ impl Cuboid {
                     ..self
                 },
             ])
-        } else {
-            Either::Left([self])
         }
     }
 
     pub fn split_z(self, z: i32) -> Either<[Self; 1], [Self; 2]> {
-        if self.z.0 < z && z <= self.z.1 {
+        if z <= self.z.0 || z > self.z.1 {
+            Either::Left([self])
+        } else {
             Either::Right([
                 Cuboid {
                     z: (self.z.0, z - 1),
@@ -156,8 +158,6 @@ impl Cuboid {
                     ..self
                 },
             ])
-        } else {
-            Either::Left([self])
         }
     }
 
