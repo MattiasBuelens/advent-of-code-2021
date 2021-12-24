@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::iter::empty;
 
+use itertools::Itertools;
 use pathfinding::prelude::*;
 
 use crate::util::Vector2D;
@@ -55,7 +56,6 @@ impl Amphipod {
     }
 }
 
-#[aoc_generator(day23)]
 pub fn input_generator(input: &str) -> Input {
     let (tiles, amphipods) = input
         .lines()
@@ -230,7 +230,8 @@ impl AmphipodKind {
 }
 
 #[aoc(day23, part1)]
-pub fn part1((burrow, state): &Input) -> u32 {
+pub fn part1(input: &str) -> u32 {
+    let (burrow, state) = &input_generator(input);
     let (_, cost) = astar(
         state,
         |state| {
@@ -264,8 +265,12 @@ pub fn part1((burrow, state): &Input) -> u32 {
 }
 
 #[aoc(day23, part2)]
-pub fn part2((burrow, state): &Input) -> i32 {
-    todo!()
+pub fn part2(input: &str) -> u32 {
+    let mut lines = input.lines().collect::<Vec<_>>();
+    lines.insert(3, "  #D#C#B#A#");
+    lines.insert(4, "  #D#B#A#C#");
+    let input = lines.into_iter().intersperse("\n").collect::<String>();
+    part1(&input)
 }
 
 #[cfg(test)]
@@ -284,13 +289,11 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        let input = input_generator(&TEST_INPUT);
-        assert_eq!(part1(&input), 12521);
+        assert_eq!(part1(&TEST_INPUT), 12521);
     }
 
     #[test]
     fn test_part2() {
-        let input = input_generator(&TEST_INPUT);
-        assert_eq!(part2(&input), 0);
+        assert_eq!(part2(&TEST_INPUT), 44169);
     }
 }
