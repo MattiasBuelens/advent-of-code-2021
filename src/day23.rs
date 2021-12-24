@@ -251,12 +251,19 @@ pub fn part1(input: &str) -> u32 {
                 .collect::<Vec<_>>()
         },
         |state| {
-            state.amphipods.iter().map(|amphipod| {
-                burrow.tiles.iter()
-                    .filter(|(_, tile)| tile == &&Tile::Room(amphipod.kind))
-                    .map(|(pos, _)| (amphipod.position - *pos).manhattan_distance() as u32)
-                    .min().unwrap()
-            }).sum::<u32>()
+            state
+                .amphipods
+                .iter()
+                .map(|amphipod| {
+                    burrow
+                        .tiles
+                        .iter()
+                        .filter(|(_, tile)| tile == &&Tile::Room(amphipod.kind))
+                        .map(|(pos, _)| (amphipod.position - *pos).manhattan_distance() as u32)
+                        .min()
+                        .unwrap()
+                })
+                .sum::<u32>()
         },
         |state| state.is_done(burrow),
     )
