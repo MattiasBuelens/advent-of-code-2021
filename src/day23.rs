@@ -139,17 +139,33 @@ impl State {
 
 impl Burrow {
     fn get_path(&self, from: Vector2D, to: Vector2D) -> Vec<Vector2D> {
-        let (path, _) = astar(
-            &from,
-            |pos| {
-                pos.neighbours()
-                    .filter(|pos| self.tiles.contains_key(&pos))
-                    .map(|pos| (pos, 1))
-            },
-            |&pos| (pos - to).manhattan_distance(),
-            |&pos| pos == to,
-        )
-        .expect("no path found");
+        let mut path = vec![from];
+        let mut pos = from;
+        // Move up to the hallway
+        while pos.y() > 1 {
+            *pos.y_mut() -= 1;
+            path.push(pos);
+        }
+        debug_assert!(pos.y() == 1);
+        // Move along hallway
+        if from.x() < to.x() {
+            while pos.x() < to.x() {
+                *pos.x_mut() += 1;
+                path.push(pos);
+            }
+        } else {
+            while pos.x() > to.x() {
+                *pos.x_mut() -= 1;
+                path.push(pos);
+            }
+        }
+        debug_assert!(pos.x() == to.x());
+        // Move down from the hallway
+        while pos.y() < to.y() {
+            *pos.y_mut() += 1;
+            path.push(pos);
+        }
+        debug_assert!(pos == to);
         path
     }
 }
