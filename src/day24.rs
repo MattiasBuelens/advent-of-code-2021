@@ -216,6 +216,29 @@ mod w 2"
     }
 
     #[test]
+    fn test_div() {
+        let program = parse_program(
+            r"
+inp w
+div w 10".trim());
+        let mut alu = Alu::new(program);
+        alu.run(&[0]);
+        assert_eq!(*alu.var(Variable::W), 0);
+        alu.run(&[10]);
+        assert_eq!(*alu.var(Variable::W), 1);
+        alu.run(&[-10]);
+        assert_eq!(*alu.var(Variable::W), -1);
+        alu.run(&[11]);
+        assert_eq!(*alu.var(Variable::W), 1);
+        alu.run(&[29]);
+        assert_eq!(*alu.var(Variable::W), 2);
+        alu.run(&[-11]);
+        assert_eq!(*alu.var(Variable::W), -1);
+        alu.run(&[-29]);
+        assert_eq!(*alu.var(Variable::W), -2);
+    }
+
+    #[test]
     fn test_part1() {
         let input = parse_program(&TEST_INPUT);
         assert_eq!(part1(&input), 0);
