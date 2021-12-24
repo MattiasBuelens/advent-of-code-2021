@@ -90,7 +90,7 @@ pub fn input_generator(input: &str) -> Input {
             })
         })
         .unzip::<(Vector2D, Tile), Option<Amphipod>, HashMap<_, _>, Vec<_>>();
-    let amphipods = amphipods.into_iter().filter_map(|x| x).collect();
+    let amphipods = amphipods.into_iter().flatten().collect();
     let burrow = Burrow { tiles };
     let state = State { amphipods };
     (burrow, state)
@@ -190,10 +190,8 @@ impl Amphipod {
         let can_move = match (self.state, next_tile) {
             (AmphipodState::Initial, Tile::Hallway) => {
                 // Amphipods will never stop on the space immediately outside any room.
-                match burrow.tiles.get(&(pos + Vector2D::new(0, 1))) {
-                    Some(Tile::Room(_)) => false,
-                    _ => true,
-                }
+                let tile_below = burrow.tiles.get(&(pos + Vector2D::new(0, 1)));
+                !matches!(tile_below, Some(Tile::Room(_)))
             }
             (AmphipodState::InHallway, Tile::Room(next_room)) if next_room == self.kind => {
                 // Amphipods will never move from the hallway into a room unless that room is
