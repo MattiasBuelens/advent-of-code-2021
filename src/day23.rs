@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::iter::empty;
 
 use pathfinding::prelude::*;
 
@@ -38,11 +39,8 @@ enum AmphipodKind {
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 enum AmphipodState {
     Initial,
-    MovingToHallway,
-    MovingInHallway,
-    StoppedInHallway,
-    MovingToRoom,
-    StoppedInRoom,
+    InHallway,
+    InRoom,
 }
 
 pub type Input = (Burrow, State);
@@ -99,13 +97,13 @@ pub fn input_generator(input: &str) -> Input {
 }
 
 impl State {
-    pub fn amphipod_at(&self, pos: Vector2D) -> Option<&Amphipod> {
+    fn amphipod_at(&self, pos: Vector2D) -> Option<&Amphipod> {
         self.amphipods
             .iter()
             .find(|amphipod| amphipod.position == pos)
     }
 
-    pub fn amphipods_in_room<'a>(
+    fn amphipods_in_room<'a>(
         &'a self,
         room_kind: AmphipodKind,
         burrow: &'a Burrow,
@@ -117,44 +115,73 @@ impl State {
             .filter_map(|(pos, _)| self.amphipod_at(*pos))
     }
 
-    pub fn moving_amphipod(&self) -> Option<&Amphipod> {
-        self.amphipods.iter().find(|amphipod| {
-            amphipod.state == AmphipodState::MovingToHallway
-                || amphipod.state == AmphipodState::MovingInHallway
-                || amphipod.state == AmphipodState::MovingToRoom
-        })
-    }
-
-    pub fn is_done(&self, burrow: &Burrow) -> bool {
+    fn is_done(&self, burrow: &Burrow) -> bool {
         self.amphipods.iter().all(|amphipod| {
             burrow.tiles.get(&amphipod.position) == Some(&Tile::Room(amphipod.kind))
         })
     }
 }
 
+impl Burrow {
+    fn get_path(&self, from: Vector2D, to: Vector2D) -> Vec<Vector2D> {
+        let (path, _) = astar(
+            &from,
+            |pos| {
+                pos.neighbours()
+                    .filter(|pos| self.tiles.contains_key(&pos))
+                    .map(|pos| (pos, 1))
+            },
+            |&pos| (pos - to).manhattan_distance(),
+            |&pos| pos == to,
+        )
+        .expect("no path found");
+        path
+    }
+}
+
 impl Amphipod {
-    pub fn can_move(&self, pos: Vector2D, burrow: &Burrow, state: &State) -> bool {
-        // Cannot move while a different amphipod is moving.
-        match state.moving_amphipod() {
-            Some(x) if x != self => return false,
-            _ => {}
-        };
-        // Cannot move into a wall.
-        let next_tile = match burrow.tiles.get(&pos) {
-            Some(tile) => tile,
-            None => return false,
-        };
-        // Cannot move into occupied space.
-        if state.amphipod_at(pos).is_some() {
-            return false;
+    fn get_moves<'a>(
+        &'a self,
+        burrow: &'a Burrow,
+        state: &'a State,
+    ) -> Box<dyn Iterator<Item = Vector2D> + 'a> {
+        match self.state {
+            AmphipodState::Initial => Box::new(
+                burrow
+                    .tiles
+                    .iter()
+                    .filter(|(pos, tile)| {
+                        tile == &&Tile::Hallway && self.can_move(**pos, burrow, state)
+                    })
+                    .map(|(pos, _)| *pos),
+            ),
+            AmphipodState::InHallway => Box::new(
+                burrow
+                    .tiles
+                    .iter()
+                    .filter(|(pos, tile)| {
+                        tile == &&Tile::Room(self.kind) && self.can_move(**pos, burrow, state)
+                    })
+                    .map(|(pos, _)| *pos),
+            ),
+            AmphipodState::InRoom => Box::new(empty()),
         }
-        match (self.state, next_tile) {
-            (AmphipodState::Initial, _) => true,
-            (AmphipodState::MovingToHallway, _) => true,
-            (AmphipodState::MovingInHallway, Tile::Room(_)) => false,
-            (AmphipodState::MovingInHallway, Tile::Hallway) => true,
-            (AmphipodState::StoppedInHallway, _) => true,
-            (AmphipodState::MovingToRoom, Tile::Room(next_room)) if next_room == &self.kind => {
+    }
+
+    fn can_move(&self, pos: Vector2D, burrow: &Burrow, state: &State) -> bool {
+        let next_tile = *burrow
+            .tiles
+            .get(&pos)
+            .expect("next position must be in bounds");
+        let can_move = match (self.state, next_tile) {
+            (AmphipodState::Initial, Tile::Hallway) => {
+                // Amphipods will never stop on the space immediately outside any room.
+                match burrow.tiles.get(&(pos + Vector2D::new(0, 1))) {
+                    Some(Tile::Room(_)) => false,
+                    _ => true,
+                }
+            }
+            (AmphipodState::InHallway, Tile::Room(next_room)) if next_room == self.kind => {
                 // Amphipods will never move from the hallway into a room unless that room is
                 // their destination room and that room contains no amphipods which do not also
                 // have that room as their own destination.
@@ -162,45 +189,32 @@ impl Amphipod {
                     .amphipods_in_room(self.kind, burrow)
                     .all(|amphipod| amphipod.kind == self.kind)
             }
-            (AmphipodState::MovingToRoom, Tile::Room(_)) => false,
-            (AmphipodState::MovingToRoom, Tile::Hallway) => true,
-            (AmphipodState::StoppedInRoom, _) => false,
+            _ => false,
+        };
+        if !can_move {
+            return false;
         }
+        // Cannot move past or into occupied spaces.
+        let path = burrow.get_path(self.position, pos);
+        let is_clear_path = path
+            .into_iter()
+            .skip(1)
+            .all(|pos| state.amphipod_at(pos).is_none());
+        if !is_clear_path {
+            return false;
+        }
+        true
     }
 
-    pub fn do_move(&mut self, pos: Vector2D, burrow: &Burrow) {
+    fn move_to(&mut self, pos: Vector2D, burrow: &Burrow) -> u32 {
+        let path_length = burrow.get_path(self.position, pos).len() as u32 - 1;
         self.position = pos;
         self.state = match self.state {
-            AmphipodState::Initial => AmphipodState::MovingToHallway,
-            AmphipodState::MovingToHallway if burrow.tiles.get(&pos) == Some(&Tile::Hallway) => {
-                AmphipodState::MovingInHallway
-            }
-            AmphipodState::StoppedInHallway => AmphipodState::MovingToRoom,
-            state => state,
-        }
-    }
-
-    pub fn can_stop(&self, burrow: &Burrow) -> bool {
-        let tile = burrow.tiles.get(&self.position).unwrap();
-        match self.state {
-            AmphipodState::MovingInHallway if tile == &Tile::Hallway => {
-                // Amphipods will never stop on the space immediately outside any room.
-                match burrow.tiles.get(&(self.position + Vector2D::new(0, 1))) {
-                    Some(Tile::Room(_)) => false,
-                    _ => true,
-                }
-            }
-            AmphipodState::MovingToRoom if tile == &Tile::Room(self.kind) => true,
-            _ => false,
-        }
-    }
-
-    pub fn do_stop(&mut self) {
-        self.state = match self.state {
-            AmphipodState::MovingInHallway => AmphipodState::StoppedInHallway,
-            AmphipodState::MovingToRoom => AmphipodState::StoppedInRoom,
-            state => state,
-        }
+            AmphipodState::Initial => AmphipodState::InHallway,
+            AmphipodState::InHallway => AmphipodState::InRoom,
+            AmphipodState::InRoom => panic!("cannot move when already in destination room"),
+        };
+        path_length * self.kind.energy()
     }
 }
 
@@ -217,7 +231,7 @@ impl AmphipodKind {
 
 #[aoc(day23, part1)]
 pub fn part1((burrow, state): &Input) -> u32 {
-    let (_, cost) = dijkstra(
+    let (_, cost) = astar(
         state,
         |state| {
             state
@@ -225,30 +239,23 @@ pub fn part1((burrow, state): &Input) -> u32 {
                 .iter()
                 .enumerate()
                 .flat_map(move |(amphipod_index, amphipod)| {
-                    let moves = amphipod.position.neighbours().flat_map(move |next_pos| {
-                        if amphipod.can_move(next_pos, burrow, state) {
-                            println!("move {:?} to {}", &amphipod, &next_pos);
-                            let mut state = state.clone();
-                            let amphipod = &mut state.amphipods[amphipod_index];
-                            let cost = amphipod.kind.energy();
-                            amphipod.do_move(next_pos, burrow);
-                            Some((state, cost))
-                        } else {
-                            None
-                        }
-                    });
-                    let stop = if amphipod.can_stop(burrow) {
-                        println!("stop {:?}", &amphipod);
+                    amphipod.get_moves(burrow, state).map(move |next_pos| {
                         let mut state = state.clone();
                         let amphipod = &mut state.amphipods[amphipod_index];
-                        amphipod.do_stop();
-                        Some((state, 0u32))
-                    } else {
-                        None
-                    };
-                    moves.chain(stop)
+                        let cost = amphipod.move_to(next_pos, burrow);
+                        // dbg!(&amphipod, amphipod_index, cost);
+                        (state, cost)
+                    })
                 })
                 .collect::<Vec<_>>()
+        },
+        |state| {
+            state.amphipods.iter().map(|amphipod| {
+                burrow.tiles.iter()
+                    .filter(|(_, tile)| tile == &&Tile::Room(amphipod.kind))
+                    .map(|(pos, _)| (amphipod.position - *pos).manhattan_distance() as u32)
+                    .min().unwrap()
+            }).sum::<u32>()
         },
         |state| state.is_done(burrow),
     )
