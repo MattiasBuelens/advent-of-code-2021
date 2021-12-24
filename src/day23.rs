@@ -115,6 +115,21 @@ impl State {
             .filter_map(|(pos, _)| self.amphipod_at(*pos))
     }
 
+    fn get_lowest_available_room(
+        &self,
+        room_kind: AmphipodKind,
+        burrow: &Burrow,
+    ) -> Option<Vector2D> {
+        burrow
+            .tiles
+            .iter()
+            .filter(|(pos, tile)| {
+                tile == &&Tile::Room(room_kind) && self.amphipod_at(**pos).is_none()
+            })
+            .max_by_key(|(pos, _)| pos.y())
+            .map(|(pos, _)| *pos)
+    }
+
     fn is_done(&self, burrow: &Burrow) -> bool {
         self.amphipods.iter().all(|amphipod| {
             burrow.tiles.get(&amphipod.position) == Some(&Tile::Room(amphipod.kind))
@@ -146,6 +161,7 @@ impl Amphipod {
         state: &'a State,
     ) -> Box<dyn Iterator<Item = Vector2D> + 'a> {
         match self.state {
+            // Move to any hallway
             AmphipodState::Initial => Box::new(
                 burrow
                     .tiles
@@ -155,14 +171,12 @@ impl Amphipod {
                     })
                     .map(|(pos, _)| *pos),
             ),
+            // Move to *lowest* available position in destination room
             AmphipodState::InHallway => Box::new(
-                burrow
-                    .tiles
-                    .iter()
-                    .filter(|(pos, tile)| {
-                        tile == &&Tile::Room(self.kind) && self.can_move(**pos, burrow, state)
-                    })
-                    .map(|(pos, _)| *pos),
+                state
+                    .get_lowest_available_room(self.kind, burrow)
+                    .into_iter()
+                    .filter(|pos| self.can_move(*pos, burrow, state)),
             ),
             AmphipodState::InRoom => Box::new(empty()),
         }
