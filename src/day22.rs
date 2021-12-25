@@ -206,20 +206,6 @@ pub fn part2(steps: &[RebootStep]) -> u64 {
     cuboids.iter().map(|x| x.volume()).sum()
 }
 
-fn is_initialization_step(step: &RebootStep) -> bool {
-    step.1.overlaps(&Cuboid {
-        x: (-50, 50),
-        y: (-50, 50),
-        z: (-50, 50),
-    })
-}
-
-fn part2_using_part1(steps: &[RebootStep]) -> u64 {
-    let mut steps = steps.to_vec();
-    steps.retain(is_initialization_step);
-    part2(&steps)
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -378,6 +364,20 @@ on x=10..10,y=10..10,z=10..10"
     fn test_part2() {
         let input = input_generator(LARGE_INPUT);
         assert_eq!(part2(&input), 2758514936282235);
+    }
+
+    fn is_initialization_step(step: &RebootStep) -> bool {
+        step.1.overlaps(&Cuboid {
+            x: (-50, 50),
+            y: (-50, 50),
+            z: (-50, 50),
+        })
+    }
+
+    fn part2_using_part1(steps: &[RebootStep]) -> u64 {
+        let mut steps = steps.to_vec();
+        steps.retain(is_initialization_step);
+        part2(&steps)
     }
 
     #[test]
