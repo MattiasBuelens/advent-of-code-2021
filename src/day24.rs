@@ -144,7 +144,7 @@ pub fn parse_program(input: &str) -> Vec<Instruction> {
 
 */
 
-fn solve(steps: &[Step], ws: Vec<i32>, zs: Vec<i32>) -> Vec<Vec<i32>> {
+fn solve(steps: &[Step], mut ws: Vec<i32>, mut zs: Vec<i32>) -> Vec<Vec<i32>> {
     let (step, steps) = match steps.split_first() {
         Some(x) => x,
         None => return vec![ws],
@@ -166,13 +166,11 @@ fn solve(steps: &[Step], ws: Vec<i32>, zs: Vec<i32>) -> Vec<Vec<i32>> {
         }
         26 => {
             // Match with previous Z
-            let z = zs.last().expect("missing z");
+            let z = *zs.last().expect("missing z");
             let w = z % 26 + step.check;
             if (1..=9).contains(&w) {
                 // Found a valid digit to make the check pass
-                let mut ws = ws.clone();
                 ws.push(w);
-                let mut zs = zs.clone();
                 let z = z / 26;
                 zs.push(z);
                 solve(steps, ws, zs)
@@ -193,9 +191,9 @@ struct Step {
 }
 
 fn extract_step(program: &[Instruction]) -> Step {
-    if let &Instruction::Div(Variable::Z, Operand::Num(div)) = &program[4] {
-        if let &Instruction::Add(Variable::X, Operand::Num(check)) = &program[5] {
-            if let &Instruction::Add(Variable::Y, Operand::Num(accum)) = &program[15] {
+    if let Instruction::Div(Variable::Z, Operand::Num(div)) = program[4] {
+        if let Instruction::Add(Variable::X, Operand::Num(check)) = program[5] {
+            if let Instruction::Add(Variable::Y, Operand::Num(accum)) = program[15] {
                 return Step { div, check, accum };
             }
         }
@@ -205,10 +203,7 @@ fn extract_step(program: &[Instruction]) -> Step {
 
 #[aoc(day24, part1)]
 pub fn part1(input: &[Instruction]) -> u64 {
-    let steps = input
-        .chunks_exact(18)
-        .map(|x| extract_step(x))
-        .collect::<Vec<_>>();
+    let steps = input.chunks_exact(18).map(extract_step).collect::<Vec<_>>();
     let solutions = solve(&steps, Vec::new(), vec![0]);
 
     let max_solution = solutions.into_iter().max().expect("no solutions");
@@ -219,10 +214,7 @@ pub fn part1(input: &[Instruction]) -> u64 {
 
 #[aoc(day24, part2)]
 pub fn part2(input: &[Instruction]) -> u64 {
-    let steps = input
-        .chunks_exact(18)
-        .map(|x| extract_step(x))
-        .collect::<Vec<_>>();
+    let steps = input.chunks_exact(18).map(extract_step).collect::<Vec<_>>();
     let solutions = solve(&steps, Vec::new(), vec![0]);
 
     let min_solution = solutions.into_iter().min().expect("no solutions");
