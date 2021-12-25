@@ -142,14 +142,182 @@ pub fn parse_program(input: &str) -> Vec<Instruction> {
     input.lines().map(|line| line.parse().unwrap()).collect()
 }
 
+/*
+   The MONAD program consists of 14 phases, where each phase processes one input with a similar
+   set of instructions matching the following regular expression:
+
+   inp w
+   mul x 0
+   add x z
+   mod x 26
+   div z (1|26)     // 1   1  1 26  1  1  1 26 26  1  26 26  26 26   (7x1, 7x26)
+   add x (-?\d+)    // 14 12 11 -4 10 10 15 -9 -9 12 -15 -7 -10  0
+   eql x           //  1   2  3  4  3  4  5  4  3  4   3  2   1  0  = log(Z)/log(26) after step
+   eql x 0
+   mul y 0
+   add y 25
+   mul y x
+   add y 1
+   mul z y
+   mul y 0
+   add y w
+   add y (-?\d+)    // 7 4 8 1 5 14 12 10 5 7 6 8 4 6
+   mul y x
+   add z y
+
+   Step  4: (digits[ 3] +  8) mod 26 + ( -4) == digits[ 4]
+   Step  8: (digits[ 7] + 12) mod 26 + ( -9) == digits[ 8]
+   Step  9: ((digits[6] + 14) * 26) + digits[7] + 12) / 26) mod 26 + ( -9) == digits[ 9]
+            (digits[6] + 14 + ((digits[7] + 12) / 26)) mod 26 + ( -9) == digits[ 9]
+            (digits[6] + 14 + 0) mod 26 + ( -9) == digits[ 9]
+   Step 11: (digits[10] +  7) mod 26 + (-15) == digits[11]
+   Step 12: (digits[11] +  6) mod 26 + ( -7) == digits[12]
+   Step 13: (digits[12] +  8) mod 26 + (-10) == digits[13]
+   Step 14: (digits[13] +  4) mod 26 + (  0) == digits[14]
+
+   Step  4: digits[ 3] +  8 mod 26 -  4 = digits[4]
+   Step  8: digits[ 7] + 12 mod 26 -  9 = digits[8]
+   Step  9: digits[ 6] + 14 mod 26 -  9 = digits[9]
+   Step 11: digits[10] + ... mod 26 - ... = digits[11]
+
+   digits[10] = 12 TOO HIGH
+   digits[11] = 4
+   digits[12] = 3
+   digits[13] = 1
+   digits[14] = 5
+
+   digits[10] = 9
+   digits[11] = 1
+   digits[12] = 0 TOO LOW
+
+   Decompiled:
+
+   w = read()
+   x = z % 26
+   z = z  OR  z = z / 26
+   x += SOME_NUMBER
+   x = (x != w)                // 0 or 1
+   z *= (25 * x) + 1
+   z += (w + SOME_OTHER_NUMBER) * x
+
+   Decompiled further:
+
+   w = read()
+   x = (z % 26) + SOME_NUMBER
+   z = z  OR  z = z / 26
+   if (x != w) {
+     z = (26 * z) + (w + SOME_OTHER_NUMBER)
+   }
+
+   In the last phase, if x != w:
+   0 == (26 * z) + (w + 6)
+   but this is impossible: (w + 6) must be a multiple of 26, but w is between 1 and 9.
+   Thus, in the last phase, x == w, and z must already be 0.
+   Earlier, z = z / 26, so at the start -25 <= z <= 25, so it rounds to 0.
+   At the same time, we have:
+   x = (z % 26) + 0
+   We must have x == w, so at the start (z % 26) == w, or z == w.
+   Thus, at the start of the last step, z = last digit, and therefore 1 <= z <= 9.
+
+   In phases 1 to 3, we divide z by 1, so it cannot decrease. At the start of step 4, we have:
+   z = ((a + 7) * 26 + b + 4) * 26) + c + 8
+   z = 26^2 * a + 26^1 * b + c + 4844
+   z = c + 8 (mod 26)
+
+   In order to fail the if-check, we must have:
+   x = (c + 8) % 26 + (-4)
+   x == w
+   Case-by-case analysis:
+    * c = 1: x = w = 5
+    * c = 2: x = w = 6
+    * c = 3: x = w = 7
+    * c = 4: x = w = 8
+    * c = 5: x = w = 9
+    * c = 6: x = 10, no valid digit for w
+
+*/
+
+fn solve(steps: &[Step], ws: Vec<i32>, zs: Vec<i32>) -> Vec<Vec<i32>> {
+    let (step, steps) = match steps.split_first() {
+        Some(x) => x,
+        None => return vec![ws],
+    };
+    match step.div {
+        1 => {
+            // Add new digit
+            let z = zs.last().expect("missing z");
+            (1..=9)
+                .flat_map(|w| {
+                    let mut ws = ws.clone();
+                    ws.push(w);
+                    let mut zs = ws.clone();
+                    let z = (26 * z) + (w + step.accum);
+                    zs.push(z);
+                    solve(steps, ws, zs)
+                })
+                .collect()
+        }
+        26 => {
+            // Match with previous Z
+            let z = zs.last().expect("missing z");
+            let w = z % 26 + step.check;
+            if (1..=9).contains(&w) {
+                // Found a valid digit to make the check pass
+                let mut ws = ws.clone();
+                ws.push(w);
+                let mut zs = ws.clone();
+                let z = z / 26;
+                zs.push(z);
+                solve(steps, ws, zs)
+            } else {
+                // Not a valid digit, no solutions
+                Vec::new()
+            }
+        }
+        div => panic!("unexpected divisor {}", div),
+    }
+}
+
+#[derive(Debug, Copy, Clone)]
+struct Step {
+    div: i32,
+    check: i32,
+    accum: i32,
+}
+
+fn extract_step(program: &[Instruction]) -> Step {
+    if let &Instruction::Div(Variable::Z, Operand::Num(div)) = &program[4] {
+        if let &Instruction::Add(Variable::X, Operand::Num(check)) = &program[5] {
+            if let &Instruction::Add(Variable::Y, Operand::Num(accum)) = &program[15] {
+                return Step { div, check, accum };
+            }
+        }
+    }
+    panic!("malformed step");
+}
+
 #[aoc(day24, part1)]
-pub fn part1(input: &[Instruction]) -> i32 {
-    todo!()
+pub fn part1(input: &[Instruction]) -> u64 {
+    let steps = input
+        .chunks_exact(18)
+        .map(|x| extract_step(x))
+        .collect::<Vec<_>>();
+    let solutions = solve(&steps, Vec::new(), vec![0]);
+
+    let max_solution = solutions.into_iter().max().expect("no solutions");
+    max_solution.iter().fold(0u64, |acc, digit| acc * 10 + (*digit as u64))
 }
 
 #[aoc(day24, part2)]
-pub fn part2(input: &[Instruction]) -> i32 {
-    todo!()
+pub fn part2(input: &[Instruction]) -> u64 {
+    let steps = input
+        .chunks_exact(18)
+        .map(|x| extract_step(x))
+        .collect::<Vec<_>>();
+    let solutions = solve(&steps, Vec::new(), vec![0]);
+
+    let min_solution = solutions.into_iter().min().expect("no solutions");
+    min_solution.iter().fold(0u64, |acc, digit| acc * 10 + (*digit as u64))
 }
 
 #[cfg(test)]
@@ -220,7 +388,9 @@ mod w 2"
         let program = parse_program(
             r"
 inp w
-div w 10".trim());
+div w 10"
+                .trim(),
+        );
         let mut alu = Alu::new(program);
         alu.run(&[0]);
         assert_eq!(*alu.var(Variable::W), 0);
