@@ -265,7 +265,7 @@ fn solve(steps: &[Step], ws: Vec<i32>, zs: Vec<i32>) -> Vec<Vec<i32>> {
                 // Found a valid digit to make the check pass
                 let mut ws = ws.clone();
                 ws.push(w);
-                let mut zs = ws.clone();
+                let mut zs = zs.clone();
                 let z = z / 26;
                 zs.push(z);
                 solve(steps, ws, zs)
