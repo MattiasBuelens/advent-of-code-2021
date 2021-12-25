@@ -165,31 +165,6 @@ pub fn parse_program(input: &str) -> Vec<Instruction> {
    mul y x
    add z y
 
-   Step  4: (digits[ 3] +  8) mod 26 + ( -4) == digits[ 4]
-   Step  8: (digits[ 7] + 12) mod 26 + ( -9) == digits[ 8]
-   Step  9: ((digits[6] + 14) * 26) + digits[7] + 12) / 26) mod 26 + ( -9) == digits[ 9]
-            (digits[6] + 14 + ((digits[7] + 12) / 26)) mod 26 + ( -9) == digits[ 9]
-            (digits[6] + 14 + 0) mod 26 + ( -9) == digits[ 9]
-   Step 11: (digits[10] +  7) mod 26 + (-15) == digits[11]
-   Step 12: (digits[11] +  6) mod 26 + ( -7) == digits[12]
-   Step 13: (digits[12] +  8) mod 26 + (-10) == digits[13]
-   Step 14: (digits[13] +  4) mod 26 + (  0) == digits[14]
-
-   Step  4: digits[ 3] +  8 mod 26 -  4 = digits[4]
-   Step  8: digits[ 7] + 12 mod 26 -  9 = digits[8]
-   Step  9: digits[ 6] + 14 mod 26 -  9 = digits[9]
-   Step 11: digits[10] + ... mod 26 - ... = digits[11]
-
-   digits[10] = 12 TOO HIGH
-   digits[11] = 4
-   digits[12] = 3
-   digits[13] = 1
-   digits[14] = 5
-
-   digits[10] = 9
-   digits[11] = 1
-   digits[12] = 0 TOO LOW
-
    Decompiled:
 
    w = read()
